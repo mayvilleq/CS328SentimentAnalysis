@@ -42,11 +42,3 @@ def random_sample_yelp_data(n):
 
     with open('training_data/yelp_training_sample_{n}.json'.format(n=n), 'w') as outfile:
         json.dump(training_data, outfile)
-
-
-# sample function on how to get data
-def read_data_from_sample(filename):
-    with open(filename) as data_file:
-        data = json.loads(data_file.read())
-        review = data[0]
-        print(review['text'])
