@@ -1,4 +1,5 @@
-import json, random, time
+import json
+import random
 
 
 def random_sample_yelp_data(n):
@@ -16,12 +17,12 @@ def random_sample_yelp_data(n):
     '''
     training_data = []
     test_data = []
-    random_sample = random.sample(range(1, 5996996), 2*n)
+    random_sample = random.sample(range(1, 5996996), 2*n)  # 5,996,996 total lines
     random.shuffle(random_sample)
     training_sample = random_sample[:n]
     test_sample = random_sample[n:]
 
-    with open('yelp_dataset/yelp_academic_dataset_review.json') as data_file:  # 5,996,996 total lines
+    with open('yelp_dataset/yelp_academic_dataset_review.json') as data_file:
         i = 1
         size = 0
         for line in data_file:

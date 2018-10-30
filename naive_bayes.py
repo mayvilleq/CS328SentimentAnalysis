@@ -55,7 +55,7 @@ def train_model(training_data_filename, output_filename):
     likelihood = (pos_likelihood, neg_likelihood)
 
     # Write out trained data
-    trained_data = {"word_list": word_list, "prior": prior, "likelihood": likelihood}
+    trained_data = {'word_list': word_list, 'prior': prior, 'likelihood': likelihood}
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
     # for i, word in enumerate(word_list):
