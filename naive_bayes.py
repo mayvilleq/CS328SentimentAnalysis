@@ -121,7 +121,7 @@ def test_model(trained_output_filename, test_data_filename):
         sentiment, _, _ = get_sentiment_and_update_counts(review, 0, 0)
         if sentiment is 'n':
             continue
-        model_guess = guess_function(review, word_list, prior, likelihood)  # TODO update with actual function
+        model_guess = guess_function(review, word_list, prior, likelihood)
 
         if sentiment is '+':
             total_pos += 1
@@ -149,27 +149,14 @@ def test_model(trained_output_filename, test_data_filename):
 
 # TODO delete this dummy testing function
 def guess_function(review, word_list, prior, likelihood):
-    #'''
-    #Stand-in guessing function for testing that returns '+' with probability p
-    #(defined below) and '-' with probability 1-p
-    #'''
-    #p = 0.8
-    #if random() > p:
-    #    return '-'
-    #else:
-    #    return '+'
     '''
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula 1 from science direct article)
     '''
-    prior_positive = prior[0]
-    prior_negative = prior[1]
+    prob_positive = prior[0]
+    prob_negative = prior[1]
     likelihood_positive = likelihood[0]
     likelihood_negative = likelihood[1]
-
-    #Initialize probability of positive to prior
-    prob_positive = prior_positive
-    prob_negative = prior_negative
 
     word_vector = review_to_word_vector(review, word_list)
 
@@ -202,11 +189,9 @@ def review_to_word_vector(review, word_list):
     return word_vector
 
 
-
-
 # TESTING
-training_data_file = 'training_data/yelp_training_sample_20.json'
-output_file = 'trained_bayes_output/test_20.json'
-test_data_file = 'test_data/yelp_test_sample_20.json'
+training_data_file = 'training_data/yelp_training_sample_1500.json'
+output_file = 'trained_bayes_output/test_1500.json'
+test_data_file = 'test_data/yelp_test_sample_1500.json'
 train_model(training_data_file, output_file)
 test_model(output_file, test_data_file)
