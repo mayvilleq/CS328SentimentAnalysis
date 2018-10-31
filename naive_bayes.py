@@ -1,5 +1,6 @@
 import json
 import string
+from random import random  # TODO get rid of this, only used by dummy guess funtion
 
 
 def train_model(training_data_filename, output_filename):
@@ -82,7 +83,7 @@ def get_sentiment_and_update_counts(review, num_pos, num_neg):
 
 def normalize_word(word):
     '''
-    Returns a lowercase version of the given word stripped of all whitespace and punctuation
+    Returns a lowercase version of the given word stripped of all whitespace and punctuation.
     '''
     word = word.lower().strip()
     for char in string.punctuation:
@@ -90,7 +91,73 @@ def normalize_word(word):
     return word
 
 
+def load_trained_output(trained_output_filename):
+    '''
+    Loads the trained output from the given file name and returns a tuple of the
+    corresponding word list, prior, and likelihood.
+    '''
+    with open(trained_output_filename) as data_file:
+        trained_data = json.loads(data_file.read())
+        word_list = trained_data['word_list']
+        prior = trained_data['prior']
+        likelihood = trained_data['likelihood']
+        return word_list, prior, likelihood
+
+
+# TODO update with info/stats we want to gather from testing
+def test_model(trained_output_filename, test_data_filename):
+    '''
+    Tests the model represented by the given trained ouput file against the given
+    file of test data. Displays accuracy results.
+    '''
+    word_list, prior, likelihood = load_trained_output(trained_output_filename)
+    with open(test_data_filename) as test_data_file:
+        reviews = json.loads(test_data_file.read())
+
+    correct_pos, correct_neg = 0, 0
+    total_pos, total_neg = 0, 0
+
+    for review in reviews:
+        sentiment, _, _ = get_sentiment_and_update_counts(review, 0, 0)
+        if sentiment is 'n':
+            continue
+        model_guess = guess_function(review, word_list, prior, likelihood)  # TODO update with actual function
+
+        if sentiment is '+':
+            total_pos += 1
+            if model_guess is '+':
+                correct_pos += 1
+
+        if sentiment is '-':
+            total_neg += 1
+            if model_guess is '-':
+                correct_neg += 1
+
+    accuracy_pos = correct_pos / total_pos
+    accuracy_neg = correct_neg / total_neg
+    accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
+
+    print('Total Accuracy: ', accuracy_total)
+    print('Positive Accuracy: ', accuracy_pos)
+    print('Negative Accuracy: ', accuracy_neg)
+
+
+# TODO delete this dummy testing function
+def guess_function(a, b, c, d):
+    '''
+    Stand-in guessing function for testing that returns '+' with probability p
+    (defined below) and '-' with probability 1-p
+    '''
+    p = 0.8
+    if random() > p:
+        return '-'
+    else:
+        return '+'
+
+
 # TESTING
 training_data_file = 'training_data/yelp_training_sample_2.json'
 output_file = 'trained_bayes_output/test_2.json'
+test_data_file = 'test_data/yelp_test_sample_50.json'
 train_model(training_data_file, output_file)
+test_model(output_file, test_data_file)
