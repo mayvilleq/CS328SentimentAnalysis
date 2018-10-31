@@ -172,6 +172,11 @@ def guess_function(review, word_list, prior, likelihood):
     else:
         return '-'
 
+
+def test_function:
+    pass
+
+
 def review_to_word_vector(review, word_list):
     '''
     Takes a review (in json dictionary form) in and returns a vector storing
