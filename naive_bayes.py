@@ -1,6 +1,5 @@
 import json
 import string
-from random import random  # TODO get rid of this, only used by dummy guess funtion
 
 
 def train_model(training_data_filename, output_filename):
@@ -135,11 +134,11 @@ def test_model(trained_output_filename, test_data_filename):
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
-        accuracy_pos = 1 #TODO was getting division by 0 error - is this okay solution?
+        accuracy_pos = 1  # TODO was getting division by 0 error - is this okay solution?
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg = 1 #TODO see above
+        accuracy_neg = 1  # TODO see above
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     print('Total Accuracy: ', accuracy_total)
@@ -160,21 +159,17 @@ def guess_function(review, word_list, prior, likelihood):
 
     word_vector = review_to_word_vector(review, word_list)
 
-    #Calculate product of likelihoods
+    # Calculate product of likelihoods
     for i, word in enumerate(word_list):
         if word_vector[i] != 0:
             prob_positive *= (likelihood_positive[i])**(word_vector[i])
             prob_negative *= (likelihood_negative[i])**(word_vector[i])
 
-    #Return argmax of two categories
+    # Return argmax of two categories
     if prob_positive > prob_negative:
         return '+'
     else:
         return '-'
-
-
-def test_function:
-    pass
 
 
 def review_to_word_vector(review, word_list):
@@ -188,7 +183,7 @@ def review_to_word_vector(review, word_list):
     for word in words:
         word = normalize_word(word)
         if word is not '':
-            if word in word_list:   #TODO Added because getting errors when words in testing data are not in vocabulary
+            if word in word_list:   # TODO Added because getting errors when words in testing data are not in vocabulary
                 word_index = word_list.index(word)
                 word_vector[word_index] += 1
     return word_vector
