@@ -1,7 +1,7 @@
 import json
 import random
 
-
+# TODO deal with encoding (/u00...)
 def random_sample_yelp_data(n):
     '''
     Randomly samples the Yelp review data set into a training data set of size n
