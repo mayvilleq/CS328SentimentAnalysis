@@ -132,9 +132,14 @@ def test_model(trained_output_filename, test_data_filename):
             total_neg += 1
             if model_guess is '-':
                 correct_neg += 1
-
-    accuracy_pos = correct_pos / total_pos
-    accuracy_neg = correct_neg / total_neg
+    if total_pos != 0:
+        accuracy_pos = correct_pos / total_pos
+    else:
+        accuracy_pos = 1 #TODO was getting division by 0 error - is this okay solution?
+    if total_neg != 0:
+        accuracy_neg = correct_neg / total_neg
+    else:
+        accuracy_neg = 1 #TODO see above
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     print('Total Accuracy: ', accuracy_total)
@@ -143,21 +148,65 @@ def test_model(trained_output_filename, test_data_filename):
 
 
 # TODO delete this dummy testing function
-def guess_function(a, b, c, d):
+def guess_function(review, word_list, prior, likelihood):
+    #'''
+    #Stand-in guessing function for testing that returns '+' with probability p
+    #(defined below) and '-' with probability 1-p
+    #'''
+    #p = 0.8
+    #if random() > p:
+    #    return '-'
+    #else:
+    #    return '+'
     '''
-    Stand-in guessing function for testing that returns '+' with probability p
-    (defined below) and '-' with probability 1-p
+    Calculates the most probable category for a review to belong to. Returns
+    '+' if positive, '-' if negative. (Uses formula 1 from science direct article)
     '''
-    p = 0.8
-    if random() > p:
-        return '-'
-    else:
+
+    prior_positive = prior[0]
+    prior_negative = prior[1]
+    #Initialize prob positive and negative
+    prob_positive = prior_positive
+    prob_negative = prior_negative
+    likelihood_positive = likelihood[0]
+    likelihood_negative = likelihood[1]
+    word_vector = review_to_word_vector(review, word_list)
+    #Seems like we have to loop through words again? Is there a way to avoid this
+    #i.e. do at same time as counting words. But maybe not, seems that we have
+    #to know all of words first...
+    for i, word in enumerate(word_list):
+        if word_vector[i] != 0:
+            prob_positive *= (likelihood_positive[i])**(word_vector[i])
+            prob_negative *= (likelihood_negative[i])**(word_vector[i])
+    print(prob_positive, prob_negative)
+    if prob_positive > prob_negative:
+        print('+')
         return '+'
+    else:
+        print('-')
+        return '-'
+
+def review_to_word_vector(review, word_list):
+    '''
+    Takes a review (in json dictionary form) in and returns a vector storing
+    word counts of the words in word_list in.
+    '''
+    word_vector = [0 for i in range(len(word_list))]
+    words = review["text"].split()
+    for word in words:
+        word = normalize_word(word)
+        if word is not '':
+            if word in word_list:   #TODO Added because getting errors when words in testing data are not in vocabulary
+                word_index = word_list.index(word)
+                word_vector[word_index] += 1
+    return word_vector
+
+
 
 
 # TESTING
 training_data_file = 'training_data/yelp_training_sample_2.json'
 output_file = 'trained_bayes_output/test_2.json'
-test_data_file = 'test_data/yelp_test_sample_50.json'
+test_data_file = 'test_data/yelp_test_sample_2.json'
 train_model(training_data_file, output_file)
 test_model(output_file, test_data_file)
