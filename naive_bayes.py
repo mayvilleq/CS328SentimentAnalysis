@@ -162,28 +162,27 @@ def guess_function(review, word_list, prior, likelihood):
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula 1 from science direct article)
     '''
-
     prior_positive = prior[0]
     prior_negative = prior[1]
-    #Initialize prob positive and negative
-    prob_positive = prior_positive
-    prob_negative = prior_negative
     likelihood_positive = likelihood[0]
     likelihood_negative = likelihood[1]
+
+    #Initialize probability of positive to prior
+    prob_positive = prior_positive
+    prob_negative = prior_negative
+
     word_vector = review_to_word_vector(review, word_list)
-    #Seems like we have to loop through words again? Is there a way to avoid this
-    #i.e. do at same time as counting words. But maybe not, seems that we have
-    #to know all of words first...
+
+    #Calculate product of likelihoods
     for i, word in enumerate(word_list):
         if word_vector[i] != 0:
             prob_positive *= (likelihood_positive[i])**(word_vector[i])
             prob_negative *= (likelihood_negative[i])**(word_vector[i])
-    print(prob_positive, prob_negative)
+
+    #Return argmax of two categories
     if prob_positive > prob_negative:
-        print('+')
         return '+'
     else:
-        print('-')
         return '-'
 
 def review_to_word_vector(review, word_list):
@@ -191,6 +190,7 @@ def review_to_word_vector(review, word_list):
     Takes a review (in json dictionary form) in and returns a vector storing
     word counts of the words in word_list in.
     '''
+
     word_vector = [0 for i in range(len(word_list))]
     words = review["text"].split()
     for word in words:
