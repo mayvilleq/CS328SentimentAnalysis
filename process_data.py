@@ -33,7 +33,7 @@ def random_sample_yelp_data(n):
                 size += 1
             if i in test_sample:
                 line_data = json.loads(line)
-                test_data.append(line_data)
+                test_data.append(line_data)  # TODO should test data be close to 50-50 pos/neg???
                 size += 1
             if size == 2*n:  # If done with sample, stop going through file
                 break
