@@ -121,7 +121,7 @@ def test_model(trained_output_filename, test_data_filename):
         sentiment, _, _ = get_sentiment_and_update_counts(review, 0, 0)
         if sentiment is 'n':
             continue
-        model_guess = guess_2_function(review, word_list, prior, likelihood)
+        model_guess = guess_function(review, word_list, prior, likelihood)
 
         if sentiment is '+':
             total_pos += 1
@@ -223,7 +223,7 @@ def review_to_word_vector(review, word_list):
 # TESTING
 #training_data_file = 'training_data/yelp_training_sample_1500.json'
 output_file = 'trained_bayes_output/test_1500.json'
-test_data_file = 'test_data/yelp_test_sample_50.json'
+test_data_file = 'test_data/yelp_test_sample_500.json'
 #train_model(training_data_file, output_file)
 test_model(output_file, test_data_file)
 
@@ -238,5 +238,10 @@ output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 
 50,50                               .15625        (.7234, .825, .142)    .21875            (.7234, .825, .142..)
 1500,2                              .09375        (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)
 1500,50                             .375           (.74, .75, .71)       .265              (.74, .75, .7142)
+500, 500                             2.8125       (.7042, .7329, .613)    2.453125         (.704, .7329, .613)
+1500, 500                            3.6875                               3.84375
+
+
+Not big difference - so will test later on lab computer so I can get big datasets
 
 '''
