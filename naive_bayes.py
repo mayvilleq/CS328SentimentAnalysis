@@ -1,5 +1,6 @@
 import json
 import string
+import time
 
 
 def train_model(training_data_filename, output_filename):
@@ -120,7 +121,7 @@ def test_model(trained_output_filename, test_data_filename):
         sentiment, _, _ = get_sentiment_and_update_counts(review, 0, 0)
         if sentiment is 'n':
             continue
-        model_guess = guess_function(review, word_list, prior, likelihood)
+        model_guess = guess_2_function(review, word_list, prior, likelihood)
 
         if sentiment is '+':
             total_pos += 1
@@ -144,14 +145,15 @@ def test_model(trained_output_filename, test_data_filename):
     print('Total Accuracy: ', accuracy_total)
     print('Positive Accuracy: ', accuracy_pos)
     print('Negative Accuracy: ', accuracy_neg)
+    print("Time:", time.clock())
 
 
-# TODO delete this dummy testing function
 def guess_function(review, word_list, prior, likelihood):
     '''
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula 1 from science direct article)
     '''
+    print("Guess_1")
     prob_positive = prior[0]
     prob_negative = prior[1]
     likelihood_positive = likelihood[0]
@@ -164,6 +166,35 @@ def guess_function(review, word_list, prior, likelihood):
         if word_vector[i] != 0:
             prob_positive *= (likelihood_positive[i])**(word_vector[i])
             prob_negative *= (likelihood_negative[i])**(word_vector[i])
+
+    # Return argmax of two categories
+    if prob_positive > prob_negative:
+        return '+'
+    else:
+        return '-'
+
+def guess_2_function(review, word_list, prior, likelihood):
+    '''
+    guess_2_function() performs same function as guess_function(), but here were try with different
+    algorithm (looping through words in review rather than words in word_list), to see if we can
+    cut down on runtime
+    '''
+    print("Guess_2")
+    prob_positive = prior[0]
+    prob_negative = prior[1]
+    likelihood_positive = likelihood[0]
+    likelihood_negative = likelihood[1]
+
+    words = review["text"].split()
+
+    for word in words:
+        word = normalize_word(word)
+        if word is '':
+            continue
+        if word in word_list:
+            word_index = word_list.index(word)
+            prob_positive *= (likelihood_positive[word_index])
+            prob_negative *= (likelihood_negative[word_index])
 
     # Return argmax of two categories
     if prob_positive > prob_negative:
@@ -190,8 +221,22 @@ def review_to_word_vector(review, word_list):
 
 
 # TESTING
-training_data_file = 'training_data/yelp_training_sample_1500.json'
+#training_data_file = 'training_data/yelp_training_sample_1500.json'
 output_file = 'trained_bayes_output/test_1500.json'
-test_data_file = 'test_data/yelp_test_sample_1500.json'
-train_model(training_data_file, output_file)
+test_data_file = 'test_data/yelp_test_sample_50.json'
+#train_model(training_data_file, output_file)
 test_model(output_file, test_data_file)
+
+'''
+Times for guess_1 vs guess_2 function
+I did not run on training or testing data, instead just used trained_bayes_output files in function test_model
+Timed on my laptop with time.clock(). Added results to make sure functions doing same thing.
+output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 time:      guess_2_results:       
+2,2                                 .046875       (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)         
+2,50                                 .109         (.85106, 1.0, 0.0)     .078125           (.86106.., 1.0, 0.0)
+50,2                                .046875       (1.0, 1.0, 1)          .0625             (1.0, 1.0, 1)
+50,50                               .15625        (.7234, .825, .142)    .21875            (.7234, .825, .142..)
+1500,2                              .09375        (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)
+1500,50                             .375           (.74, .75, .71)       .265              (.74, .75, .7142)
+
+'''
