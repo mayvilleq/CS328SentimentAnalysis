@@ -1,7 +1,5 @@
 import json
 import string
-import time
-
 
 def train_model(training_data_filename, output_filename):
     '''
@@ -121,7 +119,7 @@ def test_model(trained_output_filename, test_data_filename):
         sentiment, _, _ = get_sentiment_and_update_counts(review, 0, 0)
         if sentiment is 'n':
             continue
-        model_guess = guess_function(review, word_list, prior, likelihood)
+        model_guess = guess_2_function(review, word_list, prior, likelihood)
 
         if sentiment is '+':
             total_pos += 1
@@ -145,7 +143,6 @@ def test_model(trained_output_filename, test_data_filename):
     print('Total Accuracy: ', accuracy_total)
     print('Positive Accuracy: ', accuracy_pos)
     print('Negative Accuracy: ', accuracy_neg)
-    print("Time:", time.clock())
 
 
 def guess_function(review, word_list, prior, likelihood):
@@ -153,7 +150,6 @@ def guess_function(review, word_list, prior, likelihood):
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula 1 from science direct article)
     '''
-    print("Guess_1")
     prob_positive = prior[0]
     prob_negative = prior[1]
     likelihood_positive = likelihood[0]
@@ -179,7 +175,6 @@ def guess_2_function(review, word_list, prior, likelihood):
     algorithm (looping through words in review rather than words in word_list), to see if we can
     cut down on runtime
     '''
-    print("Guess_2")
     prob_positive = prior[0]
     prob_negative = prior[1]
     likelihood_positive = likelihood[0]
@@ -214,17 +209,17 @@ def review_to_word_vector(review, word_list):
     for word in words:
         word = normalize_word(word)
         if word is not '':
-            if word in word_list:   # TODO Added because getting errors when words in testing data are not in vocabulary
+            if word in word_list:
                 word_index = word_list.index(word)
                 word_vector[word_index] += 1
     return word_vector
 
 
 # TESTING
-#training_data_file = 'training_data/yelp_training_sample_1500.json'
+training_data_file = 'training_data/yelp_training_sample_1000.json'
 output_file = 'trained_bayes_output/test_1500.json'
-test_data_file = 'test_data/yelp_test_sample_500.json'
-#train_model(training_data_file, output_file)
+test_data_file = 'test_data/yelp_test_sample_1000.json'
+train_model(training_data_file, output_file)
 test_model(output_file, test_data_file)
 
 '''
@@ -240,8 +235,6 @@ output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 
 1500,50                             .375           (.74, .75, .71)       .265              (.74, .75, .7142)
 500, 500                             2.8125       (.7042, .7329, .613)    2.453125         (.704, .7329, .613)
 1500, 500                            3.6875                               3.84375
-
-
-Not big difference - so will test later on lab computer so I can get big datasets
-
+1000, 10000                          6.4375       (.73, .71, .79)        5.078125          (.732, .714, .79)
+1500, 1000                          7.06           (.726, .71, .76)      5.453125          (.726, .71, .76)
 '''
