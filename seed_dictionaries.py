@@ -1,0 +1,3 @@
+negative_seed_1 =  ["angry", "terrible", "poor", "bad", "sad", "dissapointing", "failure", "sick", "disgusting", "rude", "overpriced", "slow", "delay", "wait",  "irresponsible", "low", "pathetic", "mean", "scam", "cheat", "awful", "broken", "dirty", "horrible", "upset"]
+
+positive_seed_1 = []"wonderful", "perfect", "excellent", "good", "great", "nice", "amazing", "exceptional", "dellicious", "value", "quality", "friendly", "fun", "enjoy", "like", "love", "fantastic", "happy", "polite", "cool", "invaluable", "helpful", "generous", "fast", "courteous"]
