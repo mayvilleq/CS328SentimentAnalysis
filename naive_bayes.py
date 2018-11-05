@@ -1,6 +1,7 @@
 import json
 import string
 
+
 def train_model(training_data_filename, output_filename):
     '''
     Trains the Naive Bayes model based on the data provided in the given training
@@ -106,14 +107,18 @@ def load_trained_output(trained_output_filename):
 def test_model(trained_output_filename, test_data_filename):
     '''
     Tests the model represented by the given trained ouput file against the given
-    file of test data. Displays accuracy results.
+    file of test data. Returns a tuple of accuracy measures and falsely categorized
+    reviews. Accuracy measures is a tuple of the total accuracy rate, the accuracy
+    on positive reviews, and the accuracies on negative reviews. Falsely categorized
+    reviews is a tuple of two lists: false positives and false negatives.
     '''
     word_list, prior, likelihood = load_trained_output(trained_output_filename)
     with open(test_data_filename) as test_data_file:
         reviews = json.loads(test_data_file.read())
 
-    correct_pos, correct_neg = 0, 0
-    total_pos, total_neg = 0, 0
+    correct_pos, correct_neg = 0, 0  # count of reviews correctly categorized as positive/negative
+    total_pos, total_neg = 0, 0  # count of total number of positive/negative reviews
+    false_pos, false_neg = [], []  # list of reviews falsely categorized as positive/negative
 
     for review in reviews:
         sentiment, _, _ = get_sentiment_and_update_counts(review, 0, 0)
@@ -125,11 +130,15 @@ def test_model(trained_output_filename, test_data_filename):
             total_pos += 1
             if model_guess is '+':
                 correct_pos += 1
+            else:
+                false_neg.append(review)  # TODO trim content of review (maybe earlier in process)
 
         if sentiment is '-':
             total_neg += 1
             if model_guess is '-':
                 correct_neg += 1
+            else:
+                false_pos.append(review)
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
@@ -140,9 +149,9 @@ def test_model(trained_output_filename, test_data_filename):
         accuracy_neg = 1  # TODO see above
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
-    print('Total Accuracy: ', accuracy_total)
-    print('Positive Accuracy: ', accuracy_pos)
-    print('Negative Accuracy: ', accuracy_neg)
+    accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
+    errors = (false_pos, false_neg)
+    return accuracies, errors
 
 
 def guess_function(review, word_list, prior, likelihood):
@@ -168,6 +177,7 @@ def guess_function(review, word_list, prior, likelihood):
         return '+'
     else:
         return '-'
+
 
 def guess_2_function(review, word_list, prior, likelihood):
     '''
@@ -217,17 +227,17 @@ def review_to_word_vector(review, word_list):
 
 # TESTING
 training_data_file = 'training_data/yelp_training_sample_1000.json'
-output_file = 'trained_bayes_output/test_1500.json'
+output_file = 'trained_bayes_output/trained_model_1000.json'
 test_data_file = 'test_data/yelp_test_sample_1000.json'
 train_model(training_data_file, output_file)
-test_model(output_file, test_data_file)
+accuracies, errors = test_model(output_file, test_data_file)
 
 '''
 Times for guess_1 vs guess_2 function
 I did not run on training or testing data, instead just used trained_bayes_output files in function test_model
 Timed on my laptop with time.clock(). Added results to make sure functions doing same thing.
-output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 time:      guess_2_results:       
-2,2                                 .046875       (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)         
+output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 time:      guess_2_results:
+2,2                                 .046875       (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)
 2,50                                 .109         (.85106, 1.0, 0.0)     .078125           (.86106.., 1.0, 0.0)
 50,2                                .046875       (1.0, 1.0, 1)          .0625             (1.0, 1.0, 1)
 50,50                               .15625        (.7234, .825, .142)    .21875            (.7234, .825, .142..)
@@ -238,3 +248,25 @@ output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 
 1000, 10000                          6.4375       (.73, .71, .79)        5.078125          (.732, .714, .79)
 1500, 1000                          7.06           (.726, .71, .76)      5.453125          (.726, .71, .76)
 '''
+
+accuracy_total, accuracy_pos, accuracy_neg = accuracies
+false_pos, false_neg = errors
+
+print('Total Accuracy: ', accuracy_total)
+print('Positive Accuracy: ', accuracy_pos)
+print('Negative Accuracy: ', accuracy_neg)
+print('---------------------')
+
+# print(len(false_pos), 'False Positives: ')
+# stars = [x['stars'] for x in false_pos]
+# text = [x['text'] for x in false_pos]
+# for a, b in zip(stars, text):
+#     print('Stars:', a, 'Text:', b)
+#     print('---------------------')
+#
+# print(len(false_neg), 'False Negatives: ')
+# stars = [x['stars'] for x in false_neg]
+# text = [x['text'] for x in false_neg]
+# for a, b in zip(stars, text):
+#     print('Stars:', a, 'Text:', b)
+#     print('---------------------')
