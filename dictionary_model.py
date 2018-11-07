@@ -62,7 +62,8 @@ def guess(positive, negative, review, threshold=None):
     '''
     if threshold is not None:
         #TODO sort positive and negative list based on threshold if not
-        #done in co-occurrence model - left for now
+        #done in co-occurrence model - left for now - in test.py i assume this
+        #is not done here in test.py
         positive = positive
         negative = negative
 
