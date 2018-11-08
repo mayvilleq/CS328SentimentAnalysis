@@ -78,8 +78,8 @@ def guess(positive, negative, review, threshold=None):
 
     polarity = (num_pos_words - num_neg_words)/(num_pos_words + num_neg_words)
 
-    #TODO is this what threshold is for, or is it for co-occurrence case? Or maybe
-    #they're the same?? Will use 0 for the time being.
+    #TODO  ASK ANNA - we think symmetric, but unsure if window we classify as 0.
+    #Decide threshold
     if polarity <= 0:
         return '-'
     return '+'

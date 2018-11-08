@@ -3,9 +3,6 @@ import dictionary_model
 import json
 
 
-#TODO do we still want test_model() in naive_bayes, or does this file replace it?
-#(Have written as if it does, but can refactor)
-
 def test(trained_output_files_list, test_data_filename, files_to_write):
     '''
     Tests all three models on the reviews in test_data_filename.
@@ -23,8 +20,6 @@ def test(trained_output_files_list, test_data_filename, files_to_write):
     #Loop through all training data sizes - since all inner lists same size, can choose arbitrary one
     for i in range(len(trained_output_files_list[0])):
 
-        #TODO do we want these data loading functions in here, or keep in respective files?
-        #Get necessary output for each  model
         word_list, prior, likelihood = naive_bayes.load_trained_output(trained_output_files_list[0][i])
         positive_conj, negative_conj = dictionary_model.load_trained_output(trained_output_files_list[1][i])
         positive_co, negative_co = dictionary_model.load_trained_output(trained_output_files_list[2][i])
@@ -136,6 +131,8 @@ def print_results(file_to_write, false_pos_bayes, false_neg_bayes, false_pos_con
     f.write(json.dumps(false_neg_co))
     f.write("\n \n")
 
+#TODO make testing function for just one model 0 - will need to take in
+#which type of model and also outputfile.
 
 def get_sentiment_and_update_counts(review, num_pos, num_neg):
     #TODO also copied this from naive_bayes since it seems helpful...but Maybe

@@ -20,6 +20,7 @@ negative_seeds = [
     "negative",
     "stupid",
     "stinks",
+    "hate",
     ]
 
 positive_seeds = [
@@ -35,7 +36,6 @@ positive_seeds = [
     "friendly",
     "fun",
     "enjoy",
-    "like",
     "love",
     "fantastic",
     "happy",
