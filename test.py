@@ -25,9 +25,9 @@ def test(trained_output_files_list, test_data_filename, files_to_write):
 
         #TODO do we want these data loading functions in here, or keep in respective files?
         #Get necessary output for each  model
-        word_list, prior, likelihood = naive_bayes.load_trained_output(trained_output_file_list[0])
-        positive_conj, negative_conj = dictionary_model.load_trained_output(trained_output_file_list[1])
-        positve_co, negative_co = dictionary_model.load_trained_output(trained_output_file_list[2])
+        word_list, prior, likelihood = naive_bayes.load_trained_output(trained_output_files_list[0][i])
+        positive_conj, negative_conj = dictionary_model.load_trained_output(trained_output_files_list[1][i])
+        positive_co, negative_co = dictionary_model.load_trained_output(trained_output_files_list[2][i])
 
         #Get test_data into list of reviews
         with open(test_data_filename) as test_data_file:
@@ -73,9 +73,8 @@ def test(trained_output_files_list, test_data_filename, files_to_write):
 
 def print_results(file_to_write, false_pos_bayes, false_neg_bayes, false_pos_conj, false_neg_conj, false_pos_co, false_neg_co, total_pos, total_neg):
     '''
-    WRITE COMMENT HERE
+    print_results() calculates accuracy based on the results passed in, and writes these results to a python file
     '''
-    #TODO make this work for a variety of sizes....?
 
     correct_pos_bayes = total_pos - len(false_neg_bayes)
     correct_pos_conj= total_pos - len(false_neg_conj)
