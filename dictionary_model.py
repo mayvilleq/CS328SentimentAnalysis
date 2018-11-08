@@ -10,7 +10,7 @@ from seed_dictionaries import (
 # if we want/have timeself.
 # TODO can also look at LIWC like paper does for more seed dictionaries/can
 # test this dictionary like they did.
-
+# TODO part of speech (only look at adverbs, adjectives, nouns)
 
 def train_conjunction_model(training_data_filename, output_filename):
     '''
