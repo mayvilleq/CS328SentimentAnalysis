@@ -226,9 +226,9 @@ def review_to_word_vector(review, word_list):
 
 
 # TESTING
-training_data_file = 'training_data/yelp_training_sample_1000.json'
-output_file = 'trained_bayes_output/trained_model_1000.json'
-test_data_file = 'test_data/yelp_test_sample_1000.json'
+training_data_file = 'training_data/yelp_training_sample_10000.json'
+output_file = 'trained_bayes_output/trained_model_10000.json'
+test_data_file = 'test_data/yelp_test_sample_10000.json'
 train_model(training_data_file, output_file)
 accuracies, errors = test_model(output_file, test_data_file)
 
