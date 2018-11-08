@@ -1,14 +1,16 @@
 import json
 import string
+from math import log
 from seed_dictionaries import (
     negative_seeds, positive_seeds
 )
 
-#TODO paper says they address negations - prefixed negation terms to all subsequent
-#terms until next punctuation mark. We could implement this to improve accuracy
-#if we want/have timeself.
-#TODO can also look at LIWC like paper does for more seed dictionaries/can
-#test this dictionary like they did.
+# TODO paper says they address negations - prefixed negation terms to all subsequent
+# terms until next punctuation mark. We could implement this to improve accuracy
+# if we want/have timeself.
+# TODO can also look at LIWC like paper does for more seed dictionaries/can
+# test this dictionary like they did.
+
 
 def train_conjunction_model(training_data_filename, output_filename):
     '''
@@ -55,6 +57,81 @@ def train_conjunction_model(training_data_filename, output_filename):
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
 
+
+def train_cooccurrence_model(training_data_filename, output_filename):
+    '''
+    Trains the co-occurrence dictionary model based on the data provided in the given training
+    data file. Writes the components of the trained model out to the given output file.
+    '''
+    with open(training_data_filename) as data_file:
+        reviews = json.loads(data_file.read())
+
+    word_list = []  # list of all words in reviews
+    num_pos, num_neg = 0, 0  # counts of reviews containing positive and negative seed words
+    word_count_pos, word_count_neg = [], []  # counts of words (corresponding to word_list) co-occurring with pos/neg words
+
+    for review in reviews:
+        pos, neg = False, False  # does review contain pos/neg seed word?
+        words = review["text"].split()
+
+        # Check if seed word in review
+        for word in words:
+            word = normalize_word(word)
+            if word is '':
+                continue
+
+            if word in positive_seeds:
+                pos = True
+                num_pos += 1
+                break
+            elif word in negative_seeds:
+                neg = True
+                num_neg += 1
+                break
+
+        # Update word counts if seed word in review
+        if pos or neg:
+            for word in words:
+                word = normalize_word(word)
+                if word in positive_seeds or word in negative_seeds:  # don't include seed words
+                    break
+
+                # Get index of word in word list
+                if word not in word_list:
+                    word_list.append(word)
+                    word_count_pos.append(0)
+                    word_count_neg.append(0)
+                    index = len(word_list) - 1
+                else:
+                    index = word_list.index(word)
+
+                # Update co-occurrence word counts
+                if pos:
+                    word_count_pos[index] += 1
+                elif neg:
+                    word_count_neg[index] += 1
+
+    polarities = []
+    for pos_count, neg_count in zip(word_count_pos, word_count_neg):
+        proportion_pos = pos_count / num_pos
+        proportion_neg = neg_count / num_neg
+        odds_pos = proportion_pos / (1 - proportion_pos)
+        odds_neg = proportion_neg / (1 - proportion_neg)
+        if odds_neg == odds_pos:
+            polarity = 0
+        elif odds_neg == 0:
+            polarity = float('inf')
+        elif odds_pos == 0:
+            polarity = float('-inf')
+        else:
+            ratio = log(odds_pos / odds_neg)
+            polarity = (pos_count + neg_count) * ratio
+        polarities.append(polarity)
+
+    for a, b in zip(word_list, polarities):
+        print('Word:', a, 'Polarity:', b)
+
+
 def guess(positive, negative, review, threshold=None):
     '''
     Calculates the most probable category for a review to belong to. Returns
@@ -98,6 +175,7 @@ def in_seed_dic(word):
             return '+'
     return False
 
+
 def normalize_word(word):
     '''
     Returns a lowercase version of the given word stripped of all whitespace and punctuation.
@@ -106,6 +184,7 @@ def normalize_word(word):
     for char in string.punctuation:
         word = word.strip(char)
     return word
+
 
 def load_trained_output(trained_output_filename):
     '''
@@ -124,3 +203,5 @@ training_data_file = 'training_data/yelp_training_sample_50.json'
 output_file = 'trained_dictionary_output/trained_conjunction_model_50.json'
 test_data_file = 'test_data/yelp_test_sample_50.json'
 train_conjunction_model(training_data_file, output_file)
+output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_50.json'
+train_cooccurrence_model(training_data_file, output_file_2)
