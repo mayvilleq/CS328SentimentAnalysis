@@ -58,7 +58,7 @@ def train_conjunction_model(training_data_filename, output_filename):
         json.dump(trained_data, outfile)
 
 
-def train_cooccurrence_model(training_data_filename, output_filename):
+def train_cooccurrence_model(training_data_filename, output_filename, threshold=0):
     '''
     Trains the co-occurrence dictionary model based on the data provided in the given training
     data file. Writes the components of the trained model out to the given output file.
@@ -135,9 +135,18 @@ def train_cooccurrence_model(training_data_filename, output_filename):
         polarities.append(polarity)
 
     # TODO replace with writing out to file dictionaries (need polarity thresholds)
-    for a, b in zip(word_list, polarities):
-        print('Word:', a, 'Polarity:', b)
+    positive, negative = set(), set()
+    for word, polarity in zip(word_list, polarities):
+        # print('Word:', a, 'Polarity:', b)
+        if polarity < (- threshold):
+            negative.add(word)
+        if polarity > threshold:
+            positive.add(word)
 
+    # Write out trained data
+    trained_data = {'positive': list(positive), 'negative': list(negative)}
+    with open(output_filename, 'w') as outfile:
+        json.dump(trained_data, outfile)
 
 def guess(positive, negative, review, threshold=None):
     '''
@@ -205,10 +214,92 @@ def load_trained_output(trained_output_filename):
         return positive, negative
 
 
+def get_sentiment(review):
+    '''
+    Returns a tuple containing the sentiment of the given review and updated
+    counts for the number of positive and negative reviews after processing
+    the given review.
+    '''
+    sentiment = 'n'  # neutral
+    num_stars = review["stars"]
+    if num_stars >= 4:
+        sentiment = '+'
+    elif num_stars <= 2:
+        sentiment = '-'
+    return sentiment
+
+
+def test_model(trained_output_filename, test_data_filename):
+    '''
+    Tests the model represented by the given trained ouput file against the given
+    file of test data. Returns a tuple of accuracy measures and falsely categorized
+    reviews. Accuracy measures is a tuple of the total accuracy rate, the accuracy
+    on positive reviews, and the accuracies on negative reviews. Falsely categorized
+    reviews is a tuple of two lists: false positives and false negatives.
+    '''
+    positive, negative = load_trained_output(trained_output_filename)
+    with open(test_data_filename) as test_data_file:
+        reviews = json.loads(test_data_file.read())
+
+    correct_pos, correct_neg = 0, 0  # count of reviews correctly categorized as positive/negative
+    total_pos, total_neg = 0, 0  # count of total number of positive/negative reviews
+    false_pos, false_neg = [], []  # list of reviews falsely categorized as positive/negative
+
+    for review in reviews:
+        sentiment = get_sentiment(review)
+        if sentiment is 'n':
+            continue
+        model_guess = guess(positive, negative, review)
+
+        if sentiment is '+':
+            total_pos += 1
+            if model_guess is '+':
+                correct_pos += 1
+            else:
+                false_neg.append(review)  # TODO trim content of review (maybe earlier in process)
+
+        if sentiment is '-':
+            total_neg += 1
+            if model_guess is '-':
+                correct_neg += 1
+            else:
+                false_pos.append(review)
+    if total_pos != 0:
+        accuracy_pos = correct_pos / total_pos
+    else:
+        accuracy_pos = 1  # TODO was getting division by 0 error - is this okay solution?
+    if total_neg != 0:
+        accuracy_neg = correct_neg / total_neg
+    else:
+        accuracy_neg = 1  # TODO see above
+    accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
+
+    accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
+    errors = (false_pos, false_neg)
+    return accuracies, errors
+
+
 # TESTING
-training_data_file = 'training_data/yelp_training_sample_50.json'
-output_file = 'trained_dictionary_output/trained_conjunction_model_50.json'
-test_data_file = 'test_data/yelp_test_sample_50.json'
+training_data_file = 'training_data/yelp_training_sample_1000.json'
+output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
+test_data_file = 'test_data/yelp_test_sample_1000.json'
 train_conjunction_model(training_data_file, output_file)
-output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_50.json'
+output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_1000.json'
 train_cooccurrence_model(training_data_file, output_file_2)
+
+accuracies, errors = test_model(output_file, test_data_file)
+accuracy_total, accuracy_pos, accuracy_neg = accuracies
+print('-----CONJUNCTIVE-----')
+print('Total Accuracy: ', accuracy_total)
+print('Positive Accuracy: ', accuracy_pos)
+print('Negative Accuracy: ', accuracy_neg)
+print('---------------------')
+
+
+accuracies, errors = test_model(output_file_2, test_data_file)
+accuracy_total, accuracy_pos, accuracy_neg = accuracies
+print('-----CO-OCCURRENCE-----')
+print('Total Accuracy: ', accuracy_total)
+print('Positive Accuracy: ', accuracy_pos)
+print('Negative Accuracy: ', accuracy_neg)
+print('---------------------')
