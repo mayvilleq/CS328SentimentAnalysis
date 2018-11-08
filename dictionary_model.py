@@ -68,33 +68,37 @@ def train_cooccurrence_model(training_data_filename, output_filename):
 
     word_list = []  # list of all words in reviews
     num_pos, num_neg = 0, 0  # counts of reviews containing positive and negative seed words
-    word_count_pos, word_count_neg = [], []  # counts of words (corresponding to word_list) co-occurring with pos/neg words
+    word_count_pos, word_count_neg = [], []  # counts of reviews in which word (corresponding to word_list) co-occurrs with pos/neg words
 
     for review in reviews:
         pos, neg = False, False  # does review contain pos/neg seed word?
         words = review["text"].split()
-
-        # Check if seed word in review
+        # Check if a pos/neg seed word in review
         for word in words:
             word = normalize_word(word)
             if word is '':
                 continue
-
-            if word in positive_seeds:
+            if word in positive_seeds and not pos:
                 pos = True
                 num_pos += 1
-                break
-            elif word in negative_seeds:
+            if word in negative_seeds and not neg:
                 neg = True
                 num_neg += 1
+            if pos and neg:
                 break
+
+        found = {}  # track whether words found  in review to avoid double counting
 
         # Update word counts if seed word in review
         if pos or neg:
             for word in words:
                 word = normalize_word(word)
+                if word is '':
+                    continue
                 if word in positive_seeds or word in negative_seeds:  # don't include seed words
-                    break
+                    continue
+                if found.get(word, False):  # avoid double counting words
+                    continue
 
                 # Get index of word in word list
                 if word not in word_list:
@@ -108,9 +112,11 @@ def train_cooccurrence_model(training_data_filename, output_filename):
                 # Update co-occurrence word counts
                 if pos:
                     word_count_pos[index] += 1
-                elif neg:
+                if neg:
                     word_count_neg[index] += 1
+                found[word] = True
 
+    # Compute word polarities
     polarities = []
     for pos_count, neg_count in zip(word_count_pos, word_count_neg):
         proportion_pos = pos_count / num_pos
@@ -128,6 +134,7 @@ def train_cooccurrence_model(training_data_filename, output_filename):
             polarity = (pos_count + neg_count) * ratio
         polarities.append(polarity)
 
+    # TODO replace with writing out to file dictionaries (need polarity thresholds)
     for a, b in zip(word_list, polarities):
         print('Word:', a, 'Polarity:', b)
 
