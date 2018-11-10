@@ -1,9 +1,11 @@
 import json
+import random
 import string
 from math import log
 from seed_dictionaries import (
     negative_seeds, positive_seeds
 )
+from nltk import (pos_tag, word_tokenize)
 
 # TODO paper says they address negations - prefixed negation terms to all subsequent
 # terms until next punctuation mark. We could implement this to improve accuracy
@@ -11,6 +13,9 @@ from seed_dictionaries import (
 # TODO can also look at LIWC like paper does for more seed dictionaries/can
 # test this dictionary like they did.
 # TODO part of speech (only look at adverbs, adjectives, nouns)
+
+valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'NN', 'NNS', 'NNP', 'NNPS', 'UH']
+
 
 def train_conjunction_model(training_data_filename, output_filename):
     '''
@@ -21,7 +26,7 @@ def train_conjunction_model(training_data_filename, output_filename):
         reviews = json.loads(data_file.read())
 
     # TODO do we include seed words in these dictionaries??
-    positive, negative = set(), set()  # context specific sentiment dictionaries
+    positive, negative = {}, {}  # context specific sentiment dictionaries
 
     for review in reviews:
         words = review["text"].split()
@@ -43,17 +48,44 @@ def train_conjunction_model(training_data_filename, output_filename):
                     next_word = None
                 if seed_sentiment == '-':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
-                        negative.add(normalize_word(prev_word))
+                        prev_word = normalize_word(prev_word)
+                        if negative.get(prev_word) is None:
+                            negative[prev_word] = 1
+                        else:
+                            negative[prev_word] += 1
+                        #negative.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
-                        negative.add(normalize_word(next_word))
+                        next_word = normalize_word(next_word)
+                        if negative.get(next_word) is None:
+                            negative[next_word] = 1
+                        else:
+                            negative[next_word] += 1
+                        #negative.add(normalize_word(next_word))
                 if seed_sentiment == '+':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
-                        positive.add(normalize_word(prev_word))
+                        prev_word = normalize_word(prev_word)
+                        if positive.get(prev_word) is None:
+                            positive[prev_word] = 1
+                        else:
+                            positive[prev_word] += 1
+                        #positive.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
-                        positive.add(normalize_word(next_word))
+                        next_word = normalize_word(next_word)
+                        if positive.get(next_word) is None:
+                            positive[next_word] = 1
+                        else:
+                            positive[next_word] += 1
+                        #positive.add(normalize_word(next_word))
+
+    #TODO how to break ties??
+    positive = sorted(positive, key = positive.get)
+    negative = sorted(negative, key = negative.get)
+    positive = positive[-200:]
+    negative = negative[-200:]
+    print(len(positive), len(negative))
 
     # Write out trained data
-    trained_data = {'positive': list(positive), 'negative': list(negative)}
+    trained_data = {'positive': positive + positive_seeds, 'negative': negative + negative_seeds}
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
 
@@ -91,13 +123,16 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
 
         # Update word counts if seed word in review
         if pos or neg:
-            for word in words:
+            parts_of_speech = pos_tag(word_tokenize(review['text']))
+            for i, word in enumerate(words):
                 word = normalize_word(word)
                 if word is '':
                     continue
                 if word in positive_seeds or word in negative_seeds:  # don't include seed words
                     continue
                 if found.get(word, False):  # avoid double counting words
+                    continue
+                if parts_of_speech[i][1] not in valid_pos:
                     continue
 
                 # Get index of word in word list
@@ -126,25 +161,43 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
         if odds_neg == odds_pos:
             polarity = 0
         elif odds_neg == 0:
+            # odds_neg = 1 / (num_neg + len(reviews))
+            # ratio = log(odds_pos / odds_neg)
+            # polarity = (pos_count + neg_count) * ratio
             polarity = float('inf')
         elif odds_pos == 0:
+            # odds_pos = 1 / (num_pos + len(reviews))
+            # ratio = log(odds_pos / odds_neg)
+            # polarity = (pos_count + neg_count) * ratio
             polarity = float('-inf')
         else:
             ratio = log(odds_pos / odds_neg)
             polarity = (pos_count + neg_count) * ratio
         polarities.append(polarity)
 
-    # TODO replace with writing out to file dictionaries (need polarity thresholds)
+    # Add words to dictionaries based on polarity. Only consider words that co-occur more than once
     positive, negative = set(), set()
-    for word, polarity in zip(word_list, polarities):
-        # print('Word:', a, 'Polarity:', b)
-        if polarity < (- threshold):
-            negative.add(word)
-        if polarity > threshold:
-            positive.add(word)
+    for i, (word, polarity) in enumerate(zip(word_list, polarities)):
+        if polarity < (- threshold) and word_count_neg[i] > 1:
+            negative.add((word, polarity))
+            print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
+        if polarity > threshold and word_count_pos[i] > 1:
+            positive.add((word, polarity))
+            print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
+
+    print('Num Pos/Neg Seed word Reviews', num_pos, num_neg)
+    # print(list(positive)[0])
+    # print(negative)
+    positive = list(positive)
+    negative = list(negative)
+    positive.sort(key=lambda x: x[1])
+    negative.sort(key=lambda x: x[1])
+    positive = positive[-200:]
+    negative = negative[:200]  # TODO update from 200 to variable amount??
+    print(len(positive), len(negative))
 
     # Write out trained data
-    trained_data = {'positive': list(positive), 'negative': list(negative)}
+    trained_data = {'positive': positive + positive_seeds, 'negative': negative + negative_seeds}
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
 
@@ -169,7 +222,11 @@ def guess(positive, negative, review, threshold=None):
         if word in negative:
             num_neg_words += 1
 
-    polarity = (num_pos_words - num_neg_words)/(num_pos_words + num_neg_words)
+    # If polarity 0, random guess
+    if num_pos_words + num_neg_words == 0:
+        polarity = random.choice([-1,1])
+    else:
+        polarity = (num_pos_words - num_neg_words)/(num_pos_words + num_neg_words)
 
     #TODO  ASK ANNA - we think symmetric, but unsure if window we classify as 0.
     #Decide threshold
