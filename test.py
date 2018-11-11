@@ -1,4 +1,6 @@
 from naive_bayes import test_model as test_model_bayes
+from naive_bayes import load_trained_output as load_output_dict
+from naive_bayes import normalize_word
 from dictionary_model import test_model as test_model_dict
 import json
 
@@ -69,6 +71,7 @@ def print_result(accuracies, errors, file_to_write, model_title):
     f.write(json.dumps(false_neg))
     f.write("\n \n")
 
+<<<<<<< HEAD
 
 def main():
     #TESTING
@@ -79,3 +82,75 @@ def main():
 
 if __name__ == '__main__':
     main()
+=======
+def analyze_false_categorizations_dict(false_pos, false_neg, trained_output_filename):
+    '''returns words in false_pos that contribute the most positive weight'''
+    #TODO: actually test this on lab computers....first make sure dictionary.py okay...
+    positive, negative = load_output_dict(trained_output_filename)
+    pos_count_dict = {}
+    neg_count_dict = {}
+    for review in false_pos:
+        #Look for words that contribute to positive count...
+        words = review["text"].split()
+        for word in words:
+            word = normalize_word(word)
+            if word in positive:
+                if pos_count_dict.get(word) is None:
+                    pos_count_dict["word"] = 1
+                else:
+                    pos_count_dict["word"] += 1
+    for review in false_neg:
+        # Look for words that contribute highly to negative count...
+        words = review["text"].split()
+        for word in words:
+            word = normalize_word(word)
+            if word in negative:
+                if neg_count_dict.get(word) is None:
+                    neg_count_dict["word"] = 1
+                else:
+                    neg_count_dict["word"] += 1
+    pos_counts_sorted = sorted(pos_count_dict, key=pos_count_dict.get)
+    neg_counts_sorted = sorted(neg_count_dict, key=neg_count_dict.get)
+    top_10_false_pos = pos_counts_sorted[-10:]
+    top_10_false_neg = neg_counts_sorted[-10:]
+    return top_10_false_pos, top_10_false_neg
+
+def compare_models_correctness(test_data_filename, false_pos_bayes, false_neg_bayes, false_pos_conj, false_neg_conj, false_pos_co, false_neg_co):
+
+    with open(test_data_filename) as test_data_file:
+        reviews = json.loads(test_data_file.read())
+    #TODO: does it make sense to do separateley?
+    shared_false_pos = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
+    shared_false_neg = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
+    for review in reviews:
+        # False positives first:
+        if review in false_pos_bayes:
+            if review in false_pos_conj:
+                if review in false_pos_co:
+                    shared_false_pos["bayes_conj_co"].append(review)
+                else:
+                    shared_false_pos["bayes_conj"].append(review)
+            elif review in false_pos_co:
+                shared_false_pos["bayes_co"].append(review)
+        else:
+            if review in false_pos_co and false_pos_conj:
+                shared_false_pos["conj_co"].append(review)
+
+        # Now false negatives:
+        if review in false_neg_bayes:
+            if review in false_neg_conj:
+                if review in false_neg_co:
+                    shared_false_neg["bayes_conj_co"].append(review)
+                else:
+                    shared_false_neg["bayes_conj"].append(review)
+            elif review in false_neg_co:
+                shared_false_neg["bayes_co"].append(review)
+        else:
+            if review in false_neg_co and false_neg_conj:
+                shared_false_neg["conj_co"].append(review)
+#TESTING
+trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
+files_to_write = ["hii.txt"]
+test_data_filename = "test_data/yelp_test_sample_50.json"
+test(trained_output_files_list, test_data_filename, files_to_write)
+>>>>>>> b52668aee838f017f696c96a90f819ed028a4739

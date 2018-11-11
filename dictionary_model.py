@@ -49,33 +49,38 @@ def train_conjunction_model(training_data_filename, output_filename):
                 if seed_sentiment == '-':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
                         prev_word = normalize_word(prev_word)
-                        if negative.get(prev_word) is None:
-                            negative[prev_word] = 1
-                        else:
-                            negative[prev_word] += 1
-                        #negative.add(normalize_word(prev_word))
+                        #TODO added this next line because we were getting empty strings in negative and pos. dictionaries.
+                        if prev_word is not "":
+                            if negative.get(prev_word) is None:
+                                negative[prev_word] = 1
+                            else:
+                                negative[prev_word] += 1
+                            #negative.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
                         next_word = normalize_word(next_word)
-                        if negative.get(next_word) is None:
-                            negative[next_word] = 1
-                        else:
-                            negative[next_word] += 1
-                        #negative.add(normalize_word(next_word))
+                        if next_word is not "":
+                            if negative.get(next_word) is None:
+                                negative[next_word] = 1
+                            else:
+                                negative[next_word] += 1
+                            #negative.add(normalize_word(next_word))
                 if seed_sentiment == '+':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
                         prev_word = normalize_word(prev_word)
-                        if positive.get(prev_word) is None:
-                            positive[prev_word] = 1
-                        else:
-                            positive[prev_word] += 1
-                        #positive.add(normalize_word(prev_word))
+                        if prev_word is not "":
+                            if positive.get(prev_word) is None:
+                                positive[prev_word] = 1
+                            else:
+                                positive[prev_word] += 1
+                            #positive.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
                         next_word = normalize_word(next_word)
-                        if positive.get(next_word) is None:
-                            positive[next_word] = 1
-                        else:
-                            positive[next_word] += 1
-                        #positive.add(normalize_word(next_word))
+                        if next_word is not "":
+                            if positive.get(next_word) is None:
+                                positive[next_word] = 1
+                            else:
+                                positive[next_word] += 1
+                            #positive.add(normalize_word(next_word))
 
     positive.pop('', None)
     negative.pop('', None)
@@ -331,11 +336,11 @@ def test_model(trained_output_filename, test_data_filename):
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
-        accuracy_pos = 1  # TODO was getting division by 0 error - is this okay solution?
+        accuracy_pos = "N/A"  # TODO was getting division by 0 error - is this okay solution?
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg = 1  # TODO see above
+        accuracy_neg = "N/A"  # TODO see above
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
