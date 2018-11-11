@@ -91,5 +91,3 @@ def random_training_subset(filename, reviews_in_file, n):
     training_filename = 'training_data/yelp_training_sample_{t}total_{p}pos_{n}neg.json'.format(t=n, p=pos, n=neg)
     with open(training_filename, 'w') as outfile:
         json.dump(training_data, outfile)
-
-random_training_subset('training_data/yelp_training_sample_50total_32pos_18neg.json', 50, 10)
