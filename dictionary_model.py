@@ -336,27 +336,32 @@ def test_model(trained_output_filename, test_data_filename):
     return accuracies, errors
 
 
-# TESTING
-training_data_file = 'training_data/yelp_training_sample_1000.json'
-output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
-test_data_file = 'test_data/yelp_test_sample_1000.json'
-train_conjunction_model(training_data_file, output_file)
-output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_1000.json'
-train_cooccurrence_model(training_data_file, output_file_2)
+def main():
+    # TESTING
+    training_data_file = 'training_data/yelp_training_sample_1000.json'
+    output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
+    test_data_file = 'test_data/yelp_test_sample_1000.json'
+    train_conjunction_model(training_data_file, output_file)
+    output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_1000.json'
+    train_cooccurrence_model(training_data_file, output_file_2)
 
-accuracies, errors = test_model(output_file, test_data_file)
-accuracy_total, accuracy_pos, accuracy_neg = accuracies
-print('-----CONJUNCTIVE-----')
-print('Total Accuracy: ', accuracy_total)
-print('Positive Accuracy: ', accuracy_pos)
-print('Negative Accuracy: ', accuracy_neg)
-print('---------------------')
+    accuracies, errors = test_model(output_file, test_data_file)
+    accuracy_total, accuracy_pos, accuracy_neg = accuracies
+    print('-----CONJUNCTIVE-----')
+    print('Total Accuracy: ', accuracy_total)
+    print('Positive Accuracy: ', accuracy_pos)
+    print('Negative Accuracy: ', accuracy_neg)
+    print('---------------------')
 
 
-accuracies, errors = test_model(output_file_2, test_data_file)
-accuracy_total, accuracy_pos, accuracy_neg = accuracies
-print('-----CO-OCCURRENCE-----')
-print('Total Accuracy: ', accuracy_total)
-print('Positive Accuracy: ', accuracy_pos)
-print('Negative Accuracy: ', accuracy_neg)
-print('---------------------')
+    accuracies, errors = test_model(output_file_2, test_data_file)
+    accuracy_total, accuracy_pos, accuracy_neg = accuracies
+    print('-----CO-OCCURRENCE-----')
+    print('Total Accuracy: ', accuracy_total)
+    print('Positive Accuracy: ', accuracy_pos)
+    print('Negative Accuracy: ', accuracy_neg)
+    print('---------------------')
+
+
+if __name__ == '__main__':
+    main()

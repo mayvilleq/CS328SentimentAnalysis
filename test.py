@@ -33,7 +33,7 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write):
     print_result(accuracies, errors, file_to_write, "Naive Bayes")
 
 def test_dictionary_conj(trained_output_file, test_data_filename, file_to_write):
-    ''' 
+    '''
     WRITE COMMENT
     '''
 
@@ -41,7 +41,7 @@ def test_dictionary_conj(trained_output_file, test_data_filename, file_to_write)
     print_result(accuracies, errors, file_to_write, "Dictionary Model: Conjunction")
 
 def test_dictionary_co(trained_output_file, test_data_filename, file_to_write):
-    ''' 
+    '''
     WRITE COMMENT
     '''
     accuracies, errors = test_model_dict(trained_output_file, test_data_filename)
@@ -70,8 +70,12 @@ def print_result(accuracies, errors, file_to_write, model_title):
     f.write("\n \n")
 
 
-#TESTING
-trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
-files_to_write = ["size_1000_test_take_2.txt"]
-test_data_filename = "test_data/yelp_test_sample_2.json"
-test(trained_output_files_list, test_data_filename, files_to_write)
+def main():
+    #TESTING
+    trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
+    files_to_write = ["size_1000_test_take_2.txt"]
+    test_data_filename = "test_data/yelp_test_sample_2.json"
+    test(trained_output_files_list, test_data_filename, files_to_write)
+
+if __name__ == '__main__':
+    main()
