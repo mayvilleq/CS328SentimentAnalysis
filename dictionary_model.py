@@ -49,33 +49,38 @@ def train_conjunction_model(training_data_filename, output_filename):
                 if seed_sentiment == '-':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
                         prev_word = normalize_word(prev_word)
-                        if negative.get(prev_word) is None:
-                            negative[prev_word] = 1
-                        else:
-                            negative[prev_word] += 1
-                        #negative.add(normalize_word(prev_word))
+                        #TODO added this next line because we were getting empty strings in negative and pos. dictionaries.
+                        if prev_word is not "":
+                            if negative.get(prev_word) is None:
+                                negative[prev_word] = 1
+                            else:
+                                negative[prev_word] += 1
+                            #negative.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
                         next_word = normalize_word(next_word)
-                        if negative.get(next_word) is None:
-                            negative[next_word] = 1
-                        else:
-                            negative[next_word] += 1
-                        #negative.add(normalize_word(next_word))
+                        if next_word is not "":
+                            if negative.get(next_word) is None:
+                                negative[next_word] = 1
+                            else:
+                                negative[next_word] += 1
+                            #negative.add(normalize_word(next_word))
                 if seed_sentiment == '+':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
                         prev_word = normalize_word(prev_word)
-                        if positive.get(prev_word) is None:
-                            positive[prev_word] = 1
-                        else:
-                            positive[prev_word] += 1
-                        #positive.add(normalize_word(prev_word))
+                        if prev_word is not "":
+                            if positive.get(prev_word) is None:
+                                positive[prev_word] = 1
+                            else:
+                                positive[prev_word] += 1
+                            #positive.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
                         next_word = normalize_word(next_word)
-                        if positive.get(next_word) is None:
-                            positive[next_word] = 1
-                        else:
-                            positive[next_word] += 1
-                        #positive.add(normalize_word(next_word))
+                        if next_word is not "":
+                            if positive.get(next_word) is None:
+                                positive[next_word] = 1
+                            else:
+                                positive[next_word] += 1
+                            #positive.add(normalize_word(next_word))
 
     #TODO how to break ties??
     positive = sorted(positive, key = positive.get)
@@ -194,6 +199,12 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
     negative.sort(key=lambda x: x[1])
     positive = positive[-200:]
     negative = negative[:200]  # TODO update from 200 to variable amount??
+    #TODO added this because pos and neg dictionaries ended up being lists of lists (tuples still included...). Just need word, not polarity???
+    #But this also made guess all negative again - but I think we need it, otherwise just testing on seed dictionaries....
+    for i, item in enumerate(positive):
+        positive[i] = item[0]
+    for i, item in enumerate(negative):
+        negative[i] = item[0]
     print(len(positive), len(negative))
 
     # Write out trained data
