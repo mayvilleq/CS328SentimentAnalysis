@@ -14,7 +14,8 @@ from nltk import (pos_tag, word_tokenize)
 # test this dictionary like they did.
 # TODO part of speech (only look at adverbs, adjectives, nouns)
 
-valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'NN', 'NNS', 'NNP', 'NNPS', 'UH']
+# valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'NN', 'NNS', 'NNP', 'NNPS', 'UH']
+valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'UH']
 
 
 def train_conjunction_model(training_data_filename, output_filename):
@@ -183,10 +184,10 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
     # Add words to dictionaries based on polarity. Only consider words that co-occur more than once
     positive, negative = set(), set()
     for i, (word, polarity) in enumerate(zip(word_list, polarities)):
-        if polarity < (- threshold) and word_count_neg[i] > 1:
+        if polarity < (- threshold) and word_count_neg[i] > (num_neg / 300):
             negative.add((word, polarity))
             # print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
-        if polarity > threshold and word_count_pos[i] > 1:
+        if polarity > threshold and word_count_pos[i] > (num_pos / 300):
             positive.add((word, polarity))
             # print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
 
@@ -197,11 +198,17 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
     negative = list(negative)
     positive.sort(key=lambda x: x[1])
     negative.sort(key=lambda x: x[1])
-    positive = positive[-200:]
-    negative = negative[:200]  # TODO update from 200 to variable amount??
+    min_length = min(len(positive), len(negative))
+    if min_length < 200:
+        positive = positive[-min_length:]
+        negative = negative[:min_length]
+    else:
+        positive = positive[-200:]
+        negative = negative[:200]  # TODO update from 200 to variable amount??
     # print(len(positive), len(negative))
     positive, _ = zip(*positive)
     negative, _ = zip(*negative)
+    print('Dictionary Size: ', len(positive), len(negative))
 
     # Write out trained data
     trained_data = {'positive': list(positive) + positive_seeds, 'negative': list(negative) + negative_seeds}
@@ -230,6 +237,7 @@ def guess(positive, negative, review, threshold=None):
             num_neg_words += 1
 
     # If polarity 0, random guess
+    # print(num_pos_words, num_neg_words)
     if num_pos_words + num_neg_words == 0:
         polarity = random.choice([-1,1])
     else:
@@ -348,17 +356,17 @@ def main():
     training_data_file = 'training_data/yelp_training_sample_10000.json'
     output_file = 'trained_dictionary_output/trained_conjunction_model_10000.json'
     test_data_file = 'test_data/yelp_test_sample_1000.json'
-    train_conjunction_model(training_data_file, output_file)
+    # train_conjunction_model(training_data_file, output_file)
     output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_10000.json'
     train_cooccurrence_model(training_data_file, output_file_2)
-
-    accuracies, errors = test_model(output_file, test_data_file)
-    accuracy_total, accuracy_pos, accuracy_neg = accuracies
-    print('-----CONJUNCTIVE-----')
-    print('Total Accuracy: ', accuracy_total)
-    print('Positive Accuracy: ', accuracy_pos)
-    print('Negative Accuracy: ', accuracy_neg)
-    print('---------------------')
+    #
+    # accuracies, errors = test_model(output_file, test_data_file)
+    # accuracy_total, accuracy_pos, accuracy_neg = accuracies
+    # print('-----CONJUNCTIVE-----')
+    # print('Total Accuracy: ', accuracy_total)
+    # print('Positive Accuracy: ', accuracy_pos)
+    # print('Negative Accuracy: ', accuracy_neg)
+    # print('---------------------')
 
 
     accuracies, errors = test_model(output_file_2, test_data_file)
