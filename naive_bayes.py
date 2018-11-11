@@ -223,7 +223,6 @@ def review_to_word_vector(review, word_list):
                 word_vector[word_index] += 1
     return word_vector
 
-<<<<<<< HEAD
 
 def main():
     # TESTING
@@ -275,7 +274,7 @@ def main():
 
 if __name__ == '__main__':
     main()
-=======
+
 '''
 # TESTING
 training_data_file = 'training_data/yelp_training_sample_10000.json'
@@ -323,4 +322,3 @@ print('---------------------')
 #     print('Stars:', a, 'Text:', b)
 #     print('---------------------')
 '''
->>>>>>> b52668aee838f017f696c96a90f819ed028a4739
