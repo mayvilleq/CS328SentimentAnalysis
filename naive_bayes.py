@@ -1,6 +1,6 @@
 import json
 import string
-
+from nltk import word_tokenize
 
 def train_model(training_data_filename, output_filename):
     '''
@@ -16,8 +16,7 @@ def train_model(training_data_filename, output_filename):
 
     for review in reviews:
         sentiment, num_pos, num_neg = get_sentiment_and_update_counts(review, num_pos, num_neg)
-        words = review["text"].split()
-
+        words = word_tokenize(review['text'])
         for word in words:
             word = normalize_word(word)
             if word is '':

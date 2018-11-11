@@ -3,7 +3,7 @@ import random
 import string
 from math import log
 from seed_dictionaries import (
-    negative_seeds, positive_seeds
+    negative_seeds, positive_seeds, stop_words,
 )
 from nltk import (pos_tag, word_tokenize)
 
@@ -77,12 +77,17 @@ def train_conjunction_model(training_data_filename, output_filename):
                             positive[next_word] += 1
                         #positive.add(normalize_word(next_word))
 
+    positive.pop('', None)
+    negative.pop('', None)
+    for stop_word in stop_words:
+        positive.pop(stop_word, None)
+        negative.pop(stop_word, None)
     #TODO how to break ties??
     positive = sorted(positive, key = positive.get)
     negative = sorted(negative, key = negative.get)
     positive = positive[-200:]
     negative = negative[-200:]
-    print(len(positive), len(negative))
+    # print(len(positive), len(negative))
 
     # Write out trained data
     trained_data = {'positive': positive + positive_seeds, 'negative': negative + negative_seeds}
@@ -104,7 +109,7 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
 
     for review in reviews:
         pos, neg = False, False  # does review contain pos/neg seed word?
-        words = review["text"].split()
+        words = word_tokenize(review['text'])
         # Check if a pos/neg seed word in review
         for word in words:
             word = normalize_word(word)
@@ -123,12 +128,12 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
 
         # Update word counts if seed word in review
         if pos or neg:
-            parts_of_speech = pos_tag(word_tokenize(review['text']))
+            parts_of_speech = pos_tag(words)
             for i, word in enumerate(words):
                 word = normalize_word(word)
-                if word is '':
+                if word is '' or word in stop_words:
                     continue
-                if word in positive_seeds or word in negative_seeds:  # don't include seed words
+                if word in positive_seeds or word in negative_seeds:  # skip seed words
                     continue
                 if found.get(word, False):  # avoid double counting words
                     continue
@@ -180,10 +185,10 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
     for i, (word, polarity) in enumerate(zip(word_list, polarities)):
         if polarity < (- threshold) and word_count_neg[i] > 1:
             negative.add((word, polarity))
-            print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
+            # print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
         if polarity > threshold and word_count_pos[i] > 1:
             positive.add((word, polarity))
-            print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
+            # print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
 
     print('Num Pos/Neg Seed word Reviews', num_pos, num_neg)
     # print(list(positive)[0])
@@ -194,10 +199,12 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
     negative.sort(key=lambda x: x[1])
     positive = positive[-200:]
     negative = negative[:200]  # TODO update from 200 to variable amount??
-    print(len(positive), len(negative))
+    # print(len(positive), len(negative))
+    positive, _ = zip(*positive)
+    negative, _ = zip(*negative)
 
     # Write out trained data
-    trained_data = {'positive': positive + positive_seeds, 'negative': negative + negative_seeds}
+    trained_data = {'positive': list(positive) + positive_seeds, 'negative': list(negative) + negative_seeds}
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
 
@@ -338,11 +345,11 @@ def test_model(trained_output_filename, test_data_filename):
 
 def main():
     # TESTING
-    training_data_file = 'training_data/yelp_training_sample_1000.json'
-    output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
+    training_data_file = 'training_data/yelp_training_sample_10000.json'
+    output_file = 'trained_dictionary_output/trained_conjunction_model_10000.json'
     test_data_file = 'test_data/yelp_test_sample_1000.json'
     train_conjunction_model(training_data_file, output_file)
-    output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_1000.json'
+    output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_10000.json'
     train_cooccurrence_model(training_data_file, output_file_2)
 
     accuracies, errors = test_model(output_file, test_data_file)
