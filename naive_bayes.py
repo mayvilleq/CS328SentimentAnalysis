@@ -1,6 +1,5 @@
 import json
 import string
-from nltk import word_tokenize
 
 def train_model(training_data_filename, output_filename):
     '''
@@ -16,7 +15,7 @@ def train_model(training_data_filename, output_filename):
 
     for review in reviews:
         sentiment, num_pos, num_neg = get_sentiment_and_update_counts(review, num_pos, num_neg)
-        words = word_tokenize(review['text'])
+        words = review['text'].split()
         for word in words:
             word = normalize_word(word)
             if word is '':
@@ -223,7 +222,6 @@ def review_to_word_vector(review, word_list):
                 word_vector[word_index] += 1
     return word_vector
 
-<<<<<<< HEAD
 
 def main():
     # TESTING
@@ -275,52 +273,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-=======
-'''
-# TESTING
-training_data_file = 'training_data/yelp_training_sample_10000.json'
-output_file = 'trained_bayes_output/trained_model_10000.json'
-test_data_file = 'test_data/yelp_test_sample_10000.json'
-train_model(training_data_file, output_file)
-accuracies, errors = test_model(output_file, test_data_file)
-'''
-'''
-Times for guess_1 vs guess_2 function
-I did not run on training or testing data, instead just used trained_bayes_output files in function test_model
-Timed on my laptop with time.clock(). Added results to make sure functions doing same thing.
-output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 time:      guess_2_results:
-2,2                                 .046875       (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)
-2,50                                 .109         (.85106, 1.0, 0.0)     .078125           (.86106.., 1.0, 0.0)
-50,2                                .046875       (1.0, 1.0, 1)          .0625             (1.0, 1.0, 1)
-50,50                               .15625        (.7234, .825, .142)    .21875            (.7234, .825, .142..)
-1500,2                              .09375        (1.0, 1.0, 1)          .09375            (1.0, 1.0, 1)
-1500,50                             .375           (.74, .75, .71)       .265              (.74, .75, .7142)
-500, 500                             2.8125       (.7042, .7329, .613)    2.453125         (.704, .7329, .613)
-1500, 500                            3.6875                               3.84375
-1000, 10000                          6.4375       (.73, .71, .79)        5.078125          (.732, .714, .79)
-1500, 1000                          7.06           (.726, .71, .76)      5.453125          (.726, .71, .76)
-'''
-'''
-accuracy_total, accuracy_pos, accuracy_neg = accuracies
-false_pos, false_neg = errors
-
-print('Total Accuracy: ', accuracy_total)
-print('Positive Accuracy: ', accuracy_pos)
-print('Negative Accuracy: ', accuracy_neg)
-print('---------------------')
-
-# print(len(false_pos), 'False Positives: ')
-# stars = [x['stars'] for x in false_pos]
-# text = [x['text'] for x in false_pos]
-# for a, b in zip(stars, text):
-#     print('Stars:', a, 'Text:', b)
-#     print('---------------------')
-#
-# print(len(false_neg), 'False Negatives: ')
-# stars = [x['stars'] for x in false_neg]
-# text = [x['text'] for x in false_neg]
-# for a, b in zip(stars, text):
-#     print('Stars:', a, 'Text:', b)
-#     print('---------------------')
-'''
->>>>>>> b52668aee838f017f696c96a90f819ed028a4739
