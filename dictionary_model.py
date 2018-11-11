@@ -335,11 +335,11 @@ def test_model(trained_output_filename, test_data_filename):
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
-        accuracy_pos = 1  # TODO was getting division by 0 error - is this okay solution?
+        accuracy_pos = "N/A"  # TODO was getting division by 0 error - is this okay solution?
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg = 1  # TODO see above
+        accuracy_neg = "N/A"  # TODO see above
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
@@ -348,6 +348,7 @@ def test_model(trained_output_filename, test_data_filename):
 
 
 # TESTING
+'''
 training_data_file = 'training_data/yelp_training_sample_1000.json'
 output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
 test_data_file = 'test_data/yelp_test_sample_1000.json'
@@ -371,3 +372,4 @@ print('Total Accuracy: ', accuracy_total)
 print('Positive Accuracy: ', accuracy_pos)
 print('Negative Accuracy: ', accuracy_neg)
 print('---------------------')
+'''

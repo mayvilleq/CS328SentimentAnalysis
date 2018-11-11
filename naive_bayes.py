@@ -142,11 +142,11 @@ def test_model(trained_output_filename, test_data_filename):
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
-        accuracy_pos = 1  # TODO was getting division by 0 error - is this okay solution?
+        accuracy_pos = "N/A"  # TODO was getting division by 0 error - is this okay solution?
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg = 1  # TODO see above
+        accuracy_neg = "N/A"  # TODO see above
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
@@ -224,14 +224,14 @@ def review_to_word_vector(review, word_list):
                 word_vector[word_index] += 1
     return word_vector
 
-
+'''
 # TESTING
 training_data_file = 'training_data/yelp_training_sample_10000.json'
 output_file = 'trained_bayes_output/trained_model_10000.json'
 test_data_file = 'test_data/yelp_test_sample_10000.json'
 train_model(training_data_file, output_file)
 accuracies, errors = test_model(output_file, test_data_file)
-
+'''
 '''
 Times for guess_1 vs guess_2 function
 I did not run on training or testing data, instead just used trained_bayes_output files in function test_model
@@ -248,7 +248,7 @@ output_file, test_data_file       guess_1 time:   guess_1_results:      guess_2 
 1000, 10000                          6.4375       (.73, .71, .79)        5.078125          (.732, .714, .79)
 1500, 1000                          7.06           (.726, .71, .76)      5.453125          (.726, .71, .76)
 '''
-
+'''
 accuracy_total, accuracy_pos, accuracy_neg = accuracies
 false_pos, false_neg = errors
 
@@ -270,3 +270,4 @@ print('---------------------')
 # for a, b in zip(stars, text):
 #     print('Stars:', a, 'Text:', b)
 #     print('---------------------')
+'''
