@@ -50,7 +50,7 @@ def train_conjunction_model(training_data_filename, output_filename):
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
                         prev_word = normalize_word(prev_word)
                         #TODO added this next line because we were getting empty strings in negative and pos. dictionaries.
-                        if prev_word is not "":
+                        if prev_word is not '' and prev_word not in stop_words:
                             if negative.get(prev_word) is None:
                                 negative[prev_word] = 1
                             else:
@@ -58,7 +58,7 @@ def train_conjunction_model(training_data_filename, output_filename):
                             #negative.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
                         next_word = normalize_word(next_word)
-                        if next_word is not "":
+                        if next_word is not '' and next_word not in stop_words:
                             if negative.get(next_word) is None:
                                 negative[next_word] = 1
                             else:
@@ -67,7 +67,7 @@ def train_conjunction_model(training_data_filename, output_filename):
                 if seed_sentiment == '+':
                     if prev_word and (prev_word.lower() == normalize_word(prev_word)):
                         prev_word = normalize_word(prev_word)
-                        if prev_word is not "":
+                        if prev_word is not '' and prev_word not in stop_words:
                             if positive.get(prev_word) is None:
                                 positive[prev_word] = 1
                             else:
@@ -75,18 +75,13 @@ def train_conjunction_model(training_data_filename, output_filename):
                             #positive.add(normalize_word(prev_word))
                     if next_word and (word.lower() == normalized_word):
                         next_word = normalize_word(next_word)
-                        if next_word is not "":
+                        if next_word is not '' and next_word not in stop_words:
                             if positive.get(next_word) is None:
                                 positive[next_word] = 1
                             else:
                                 positive[next_word] += 1
                             #positive.add(normalize_word(next_word))
 
-    positive.pop('', None)
-    negative.pop('', None)
-    for stop_word in stop_words:
-        positive.pop(stop_word, None)
-        negative.pop(stop_word, None)
     #TODO how to break ties??
     positive = sorted(positive, key = positive.get)
     negative = sorted(negative, key = negative.get)

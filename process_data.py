@@ -1,7 +1,7 @@
 import json
 import random
 
-
+# TODO ignore neutrals ??
 # TODO deal with encoding (/u00...)
 def random_sample_yelp_data(n):
     '''
