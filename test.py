@@ -87,9 +87,8 @@ def analyze_false_categorizations_bayes(errors, trained_output_filename):
 
 
 def analyze_false_categorizations_dict(errors, trained_output_filename):
-    '''
-    WRITE COMMENT HERE
-    '''
+    '''returns words in false_pos that contribute the most positive weight'''
+
     #TODO: actually test this on lab computers....first make sure dictionary.py okay...
     (false_pos, false_neg) = errors
     positive, negative = load_output_dict(trained_output_filename)
@@ -155,9 +154,13 @@ def compare_models_correctness(test_data_filename, false_pos_bayes, false_neg_ba
         else:
             if review in false_neg_co and false_neg_conj:
                 shared_false_neg["conj_co"].append(review)
+                
+def main():
+    #TESTING
+    trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
+    files_to_write = ["size_1000_test_take_2.txt"]
+    test_data_filename = "test_data/yelp_test_sample_2.json"
+    test(trained_output_files_list, test_data_filename, files_to_write)
 
-#TESTING
-trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
-files_to_write = ["testing_test.txt"]
-test_data_filename = "test_data/yelp_test_sample_2.json"
-test(trained_output_files_list, test_data_filename, files_to_write)
+if __name__ == '__main__':
+    main()
