@@ -2,20 +2,17 @@ import json
 import random
 import string
 from math import log
+from nltk import pos_tag, word_tokenize
 from seed_dictionaries import (
     negative_seeds, positive_seeds, stop_words,
 )
-from nltk import (pos_tag, word_tokenize)
 
-# TODO paper says they address negations - prefixed negation terms to all subsequent
-# terms until next punctuation mark. We could implement this to improve accuracy
-# if we want/have timeself.
 # TODO can also look at LIWC like paper does for more seed dictionaries/can
 # test this dictionary like they did.
 
-# Valids of part of speech - only look at adverbs, adjectives, and nouns (for conjunctive only)
+# Valids of part of speech - only look at adverbs, adjectives
 valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'UH']
-nouns = ['NN', 'NNS', 'NNP', 'NNPS']
+nouns = ['NN', 'NNS', 'NNP', 'NNPS']  # Include nouns for conjunctive model
 
 
 def train_conjunction_model(training_data_filename, output_filename):
@@ -26,18 +23,20 @@ def train_conjunction_model(training_data_filename, output_filename):
     with open(training_data_filename) as data_file:
         reviews = json.loads(data_file.read())
 
-    # TODO do we include seed words in these dictionaries??
     positive, negative = {}, {}  # context specific sentiment dictionaries
 
+    # Get and proccess text of each review
     for review in reviews:
         words = word_tokenize(review['text'])
         parts_of_speech = pos_tag(words)
         words = negations(words)
+
+        # Check whether seed word occurs
         for i, word in enumerate(words):
             normalized_word = normalize_word(word)
-
             seed_sentiment = in_seed_dic(normalized_word)
-            # TODO deal with punctuation
+
+            # If seed word, get previous and next word
             if seed_sentiment:
                 if i != 0:
                     prev_word = normalize_word(words[i-1])
@@ -47,52 +46,55 @@ def train_conjunction_model(training_data_filename, output_filename):
                     next_word = normalize_word(words[i+1])
                 else:
                     next_word = None
-                if seed_sentiment == '-':
-                    if prev_word and prev_word not in string.punctuation:
-                        #TODO added this next line because we were getting empty strings in negative and pos. dictionaries.
-                        if prev_word is not '' and prev_word not in stop_words and parts_of_speech[i-1][1] in valid_pos+nouns:
-                            if negative.get(prev_word) is None:
-                                negative[prev_word] = 1
-                            else:
-                                negative[prev_word] += 1
-                            #negative.add(normalize_word(prev_word))
-                    if next_word and next_word not in string.punctuation:
-                        if next_word is not '' and next_word not in stop_words and parts_of_speech[i+1][1] in valid_pos+nouns:
-                            if negative.get(next_word) is None:
-                                negative[next_word] = 1
-                            else:
-                                negative[next_word] += 1
-                            #negative.add(normalize_word(next_word))
-                if seed_sentiment == '+':
-                    if prev_word and prev_word not in string.punctuation:
-                        if prev_word is not '' and prev_word not in stop_words and parts_of_speech[i-1][1] in valid_pos+nouns:
-                            if positive.get(prev_word) is None:
-                                positive[prev_word] = 1
-                            else:
-                                positive[prev_word] += 1
-                            #positive.add(normalize_word(prev_word))
-                    if next_word and next_word not in string.punctuation:
-                        if next_word is not '' and next_word not in stop_words and parts_of_speech[i+1][1] in valid_pos+nouns:
-                            if positive.get(next_word) is None:
-                                positive[next_word] = 1
-                            else:
-                                positive[next_word] += 1
-                            #positive.add(normalize_word(next_word))
 
-    #TODO how to break ties??
+                # If previous word is valid, add to corresponding dictionary
+                if all((
+                    prev_word,
+                    prev_word not in string.punctuation,
+                    prev_word not in stop_words,
+                    parts_of_speech[i-1][1] in (valid_pos + nouns),
+                )):
+                    if seed_sentiment == '-':
+                        if negative.get(prev_word) is None:
+                            negative[prev_word] = 1
+                        else:
+                            negative[prev_word] += 1
+                    else:
+                        if positive.get(prev_word) is None:
+                            positive[prev_word] = 1
+                        else:
+                            positive[prev_word] += 1
+
+                # If next word is valid, add to corresponding dictionary
+                if all((
+                    next_word,
+                    next_word not in string.punctuation,
+                    next_word not in stop_words,
+                    parts_of_speech[i-1][1] in (valid_pos + nouns),
+                )):
+                    if seed_sentiment == '-':
+                        if negative.get(next_word) is None:
+                            negative[next_word] = 1
+                        else:
+                            negative[next_word] += 1
+                    else:
+                        if positive.get(prev_word) is None:
+                            positive[prev_word] = 1
+                        else:
+                            positive[prev_word] += 1
+
+    # Sort dictionaries by count (ties are broken arbitrarily)
     positive = sorted(positive, key=positive.get)
     negative = sorted(negative, key=negative.get)
+
+    # Trim dictionaries to top 200 (or min dic length) words
     min_length = min(len(positive), len(negative))
     if min_length < 200:
         positive = positive[-min_length:]
         negative = negative[-min_length:]
     else:
         positive = positive[-200:]
-        negative = negative[-200:]  # TODO update from 200 to variable amount??
-
-
-
-    # print(len(positive), len(negative))
+        negative = negative[-200:]
 
     # Write out trained data
     trained_data = {'positive': positive + positive_seeds, 'negative': negative + negative_seeds}
@@ -286,9 +288,7 @@ def load_trained_output(trained_output_filename):
 
 def get_sentiment(review):
     '''
-    Returns a tuple containing the sentiment of the given review and updated
-    counts for the number of positive and negative reviews after processing
-    the given review.
+    Returns the sentiment of the given review.
     '''
     sentiment = 'n'  # neutral
     num_stars = review["stars"]
@@ -299,16 +299,20 @@ def get_sentiment(review):
     return sentiment
 
 
-def negations(words):
+def negations(word_tokens):
+    '''
+    Returns a copy of the given word_tokens where any time 'no' or 'not' appears,
+    'not' is prefixed to every word before the next punctuation.
+    '''
     negated = False
     result = []
-    for word in words:
-        if word in ['no', 'not']:
+    for token in word_tokens:
+        if token in ['no', 'not']:
             negated = True
-        elif word in string.punctuation:
+        elif token in string.punctuation:
             negated = False
         elif negated:
-            word = 'not-' + word
+            word = 'not-' + token
         result.append(word)
     return result
 
