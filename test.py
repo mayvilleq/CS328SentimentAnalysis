@@ -3,6 +3,9 @@ from naive_bayes import load_trained_output as load_output_bayes
 from dictionary_model import load_trained_output as load_output_dict
 from naive_bayes import normalize_word
 from dictionary_model import test_model as test_model_dict
+from seed_dictionaries import (
+    negative_seeds, positive_seeds, stop_words
+)
 import json
 
 
@@ -19,6 +22,7 @@ def test(trained_output_files_list, test_data_filename, files_to_write):
     files_to_write is a list of file names - we will write results of all three
     methods to the same file, but will make a separate file for each sample size
     '''
+    print(stop_words)
 
     #Loop through all training data sizes - since all inner lists same size, can choose arbitrary one
     for i in range(len(trained_output_files_list[0])):
@@ -32,7 +36,7 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write):
     WRITE COMMENT HERE
     '''
     accuracies, errors = test_model_bayes(trained_output_filename, test_data_filename)
-    top_10_false_lists = [], []
+    top_10_false_lists = analyze_false_categorizations_bayes(errors, trained_output_filename)
     print_result(accuracies, errors, top_10_false_lists, file_to_write, "Naive Bayes", trained_output_filename)
 
 def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write):
@@ -81,10 +85,46 @@ def print_result(accuracies, errors, top_10_false_lists, file_to_write, model_ti
 
 def analyze_false_categorizations_bayes(errors, trained_output_filename):
     '''
-    WRITE COMMENT HERE
+    WRITE COMMENT HERE - include that not actually likelihood but raised to power...
     '''
     (false_pos, false_neg) = errors
     word_list, priors, likelihoods = load_output_bayes(trained_output_filename)
+    (pos_likelihood, neg_likelihood) = likelihoods
+    pos_likelihood_dict, neg_likelihood_dict = {}, {}
+    for review in false_pos:
+        #Look for words with high positive likelihood
+        words = review["text"].split()
+        for word in words:
+            word = normalize_word(word)
+            if word in word_list and word not in stop_words:
+                word_index = word_list.index(word)
+                if pos_likelihood_dict.get(word) is None:
+                    pos_likelihood_dict[word] = pos_likelihood[word_index] - neg_likelihood[word_index]
+
+                #if pos_likelihood_dict.get(word) is None:
+                #    pos_likelihood_dict[word] = pos_likelihood[word_index]
+                #else:
+                #    pos_likelihood_dict[word] *= pos_likelihood[word_index]
+    for review in false_neg:
+        #Look for words with high negative likelihood
+        words = review["text"].split()
+        for word in words:
+            word = normalize_word(word)
+            if word in word_list and word not in stop_words:
+                word_index = word_list.index(word)
+                if neg_likelihood_dict.get(word) is None:
+                    neg_likelihood_dict[word] = neg_likelihood[word_index] - pos_likelihood[word_index]
+                #else:
+                #    neg_likelihood_dict[word] *= neg_likelihood[word_index]
+
+    pos_likelihood_sorted = sorted(pos_likelihood_dict, key=pos_likelihood_dict.get)
+    neg_likelihood_sorted = sorted(neg_likelihood_dict, key=neg_likelihood_dict.get)
+    top_10_false_pos = pos_likelihood_sorted[-20:]
+    top_10_false_neg = neg_likelihood_sorted[-20:]
+    print(top_10_false_pos, top_10_false_neg)
+    return (top_10_false_pos, top_10_false_neg)
+
+
 
 def analyze_false_categorizations_dict(errors, trained_output_filename):
     '''returns words in false_pos that contribute the most positive weight'''
@@ -99,7 +139,7 @@ def analyze_false_categorizations_dict(errors, trained_output_filename):
         words = review["text"].split()
         for word in words:
             word = normalize_word(word)
-            if word in positive:
+            if word in positive and word not in stop_words:
                 if pos_count_dict.get(word) is None:
                     pos_count_dict[word] = 1
                 else:
@@ -109,23 +149,51 @@ def analyze_false_categorizations_dict(errors, trained_output_filename):
         words = review["text"].split()
         for word in words:
             word = normalize_word(word)
-            if word in negative:
+            if word in negative and word not in stop_words:
                 if neg_count_dict.get(word) is None:
                     neg_count_dict[word] = 1
                 else:
                     neg_count_dict[word] += 1
     pos_counts_sorted = sorted(pos_count_dict, key=pos_count_dict.get)
     neg_counts_sorted = sorted(neg_count_dict, key=neg_count_dict.get)
-    top_10_false_pos = pos_counts_sorted[-10:]
-    top_10_false_neg = neg_counts_sorted[-10:]
+    top_10_false_pos = pos_counts_sorted[-20:]
+    top_10_false_neg = neg_counts_sorted[-20:]
     print(top_10_false_pos, top_10_false_neg)
     return (top_10_false_pos, top_10_false_neg)
 
-def compare_models_correctness(test_data_filename, false_pos_bayes, false_neg_bayes, false_pos_conj, false_neg_conj, false_pos_co, false_neg_co):
+def compare_across_models(trained_output_files_list, test_data_filename):
+    '''
+    WRITE COMMENT HERE
+    '''
+    errors_bayes = test_model_bayes(trained_output_files_list[0], test_data_filename)[1]
+    errors_conj = test_model_dict(trained_output_files_list[1], test_data_filename)[1]
+    errors_co = test_model_dict(trained_output_files_list[2], test_data_filename)[1]
 
+    shared_false_pos, shared_false_neg = compare_models_correctness(test_data_filename, errors_bayes, errors_conj, errors_co)
+    print("Number of False Positives Misclassified by: ")
+    print("Bayes + Conj only: ", len(shared_false_pos["bayes_conj"]))
+    print("Bayes + Co-occurr only: ", len(shared_false_pos["bayes_co"]))
+    print("Co-occurr + Conj only: ", len(shared_false_pos["conj_co"]))
+    print("All three: ", len(shared_false_pos["bayes_conj_co"]))
+    print("-------------------------------------------------")
+    print("Number of False Negatives Misclassified by: ")
+    print("Bayes + Conj only: ", len(shared_false_neg["bayes_conj"]))
+    print("Bayes + Co-occurr only: ", len(shared_false_neg["bayes_co"]))
+    print("Co-occurr + Conj only: ", len(shared_false_neg["conj_co"]))
+    print("All three: ", len(shared_false_neg["bayes_conj_co"]))
+
+
+def compare_models_correctness(test_data_filename, errors_bayes, errors_conj, errors_co):
+    '''
+    WRITE COMMENT HERE
+    '''
+    #TODO use set operations instead
+    (false_pos_bayes, false_neg_bayes) = errors_bayes
+    (false_pos_conj, false_neg_conj) = errors_conj
+    (false_pos_co, false_neg_co) = errors_co
     with open(test_data_filename) as test_data_file:
         reviews = json.loads(test_data_file.read())
-    #TODO: does it make sense to do separateley? use all's
+    print(len(reviews))
     shared_false_pos = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
     shared_false_neg = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
     for review in reviews:
@@ -154,13 +222,14 @@ def compare_models_correctness(test_data_filename, false_pos_bayes, false_neg_ba
         else:
             if review in false_neg_co and false_neg_conj:
                 shared_false_neg["conj_co"].append(review)
+    return shared_false_pos, shared_false_neg
 
 def main():
     #TESTING
-    trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
-    files_to_write = ["size_1000_testing.txt"]
-    test_data_filename = "test_data/yelp_test_sample_2.json"
-    test(trained_output_files_list, test_data_filename, files_to_write)
-
+    trained_output_files_list = ["trained_bayes_output/trained_model_1000.json", "trained_dictionary_output/trained_conjunction_model_1000.json", "trained_dictionary_output/trained_cooccurrence_model_1000.json"]
+    files_to_write = ["testing_test.txt"]
+    test_data_filename = "test_data/yelp_test_sample_10000.json"
+    #test(trained_output_files_list, test_data_filename, files_to_write)
+    compare_across_models(trained_output_files_list, test_data_filename)
 if __name__ == '__main__':
     main()
