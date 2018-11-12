@@ -68,7 +68,7 @@ def train_conjunction_model(training_data_filename, output_filename):
                 if next_word and all((
                     next_word not in string.punctuation,
                     next_word not in stop_words,
-                    parts_of_speech[i-1][1] in (valid_pos + nouns),
+                    parts_of_speech[i+1][1] in (valid_pos + nouns),
                 )):
                     if seed_sentiment == '-':
                         if negative.get(next_word) is None:
@@ -76,10 +76,10 @@ def train_conjunction_model(training_data_filename, output_filename):
                         else:
                             negative[next_word] += 1
                     else:
-                        if positive.get(prev_word) is None:
-                            positive[prev_word] = 1
+                        if positive.get(next_word) is None:
+                            positive[next_word] = 1
                         else:
-                            positive[prev_word] += 1
+                            positive[next_word] += 1
 
     # Sort dictionaries by count (ties are broken arbitrarily)
     positive = sorted(positive, key=positive.get)
