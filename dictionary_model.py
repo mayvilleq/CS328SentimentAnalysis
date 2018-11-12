@@ -32,6 +32,7 @@ def train_conjunction_model(training_data_filename, output_filename):
     for review in reviews:
         words = word_tokenize(review['text'])
         parts_of_speech = pos_tag(words)
+        words = negations(words)
         for i, word in enumerate(words):
             normalized_word = normalize_word(word)
 
@@ -113,7 +114,8 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
 
     for review in reviews:
         pos, neg = False, False  # does review contain pos/neg seed word?
-        words = word_tokenize(review['text'])
+        original_words = word_tokenize(review['text'])
+        words = negations(original_words)
         # Check if a pos/neg seed word in review
         for word in words:
             word = normalize_word(word)
@@ -132,7 +134,7 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
 
         # Update word counts if seed word in review
         if pos or neg:
-            parts_of_speech = pos_tag(words)
+            parts_of_speech = pos_tag(original_words)
             for i, word in enumerate(words):
                 word = normalize_word(word)
                 if word is '' or word in stop_words:
@@ -307,7 +309,7 @@ def negations(words):
             negated = False
         elif negated:
             word = 'not-' + word
-        result.append(words)
+        result.append(word)
     return result
 
 
