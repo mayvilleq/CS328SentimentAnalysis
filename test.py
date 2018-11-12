@@ -1,3 +1,8 @@
+'''
+test.py contains functions to help with testing our three models, printing
+results, and analyzing errors.
+'''
+
 from naive_bayes import test_model as test_model_bayes
 from naive_bayes import load_trained_output as load_output_bayes
 from dictionary_model import load_trained_output as load_output_dict
@@ -13,18 +18,16 @@ def test(trained_output_files_list, test_data_filename, files_to_write):
     '''
     Tests all three models on the reviews in test_data_filename.
 
-    trained_output_files_list is a 2-D array of the trained output files for each
+    trained_output_files_list is a 2-D list of the trained output files for each
     model in the order [naive_bayes, conjunction_dictionary, coccurrence_dictionary]
     where each inner list is a list of trained output files associated with that model
     varying with size of training data. We will assume each of these inner lists
-    is of the same length.
+    is of the same length and represents the same size order (increasing).
 
-    files_to_write is a list of file names - we will write results of all three
+    files_to_write is a list of file names: we will write results of all three
     methods to the same file, but will make a separate file for each sample size
     '''
-    print(stop_words)
-
-    #Loop through all training data sizes - since all inner lists same size, can choose arbitrary one
+    #Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
     for i in range(len(trained_output_files_list[0])):
         file_to_write = files_to_write[i]
         test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write)
@@ -33,7 +36,10 @@ def test(trained_output_files_list, test_data_filename, files_to_write):
 
 def test_bayes(trained_output_filename, test_data_filename, file_to_write):
     '''
-    WRITE COMMENT HERE
+    Helper function for test(). Takes in a trained output file, testing data file,
+    and an output file. It calls test_model from naive_bayes.py to determine the accuracies
+    and errors (false_positives, false_negatives). It then appends these results
+    (through print_result) to file_to_write.
     '''
     accuracies, errors = test_model_bayes(trained_output_filename, test_data_filename)
     top_10_false_lists = analyze_false_categorizations_bayes(errors, trained_output_filename)
@@ -41,7 +47,10 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write):
 
 def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write):
     '''
-    WRITE COMMENT
+    Helper function for test(). Takes in a trained output file, testing data file,
+    and an output file. It calls test_model from dictionary_model.py to determine the accuracies
+    and errors (false_positives, false_negatives). It then appends these results
+    (through print_result) to file_to_write.
     '''
     accuracies, errors = test_model_dict(trained_output_filename, test_data_filename)
     top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
@@ -49,7 +58,10 @@ def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_wr
 
 def test_dictionary_co(trained_output_filename, test_data_filename, file_to_write):
     '''
-    WRITE COMMENT
+    Helper function for test(). Takes in a trained output file, testing data file,
+    and an output file. It calls test_model from dictionary_model.py to determine the accuracies
+    and errors (false_positives, false_negatives). It then appends these results
+    (through print_result) to file_to_write.
     '''
     accuracies, errors = test_model_dict(trained_output_filename, test_data_filename)
     top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
@@ -57,20 +69,24 @@ def test_dictionary_co(trained_output_filename, test_data_filename, file_to_writ
 
 def print_result(accuracies, errors, top_10_false_lists, file_to_write, model_title, trained_output_filename):
     '''
-    WRITE COMMENT
+    Appends results to trained_output_filename. Results (accuracies/errors) are taken
+    in as parameters. Since we will use this function for multiple models, and
+    print to the same output file, we take in a string model_title to print before
+    writing results. At the moment, we also take in
     '''
-
+    #TODO decide whether you want to deal with accuracies and errors here...or make separate function - add to comment to tell what you decide
+    # Unload tuples passed in
     (accuracy_total, accuracy_pos, accuracy_neg) = accuracies
     (false_pos, false_neg) = errors
     (top_10_false_pos, top_10_false_neg) = top_10_false_lists
 
-    #write results to a file TODO mention why append in comment and to Quinn
+    # Append results to file_to_write
     f = open(file_to_write, 'a')
     f.write(model_title + "\n" )
     f.write("Total Accuracy: " + str(accuracy_total) + "\n")
     f.write("Positive Accuracy: " + str(accuracy_pos) + "\n")
     f.write(" Negative Accuracy: " + str(accuracy_neg) + "\n")
-    f.write("False Positives List: \n")    #TODO maybe we don't want to print these - too long???
+    f.write("False Positives List: \n")
     f.write(json.dumps(false_pos))
     f.write("\n")
     f.write("False Negatives List: \n")
@@ -85,8 +101,14 @@ def print_result(accuracies, errors, top_10_false_lists, file_to_write, model_ti
 
 def analyze_false_categorizations_bayes(errors, trained_output_filename):
     '''
-    WRITE COMMENT HERE - include that not actually likelihood but raised to power...
+    This function takes in errors, a tuple of two lists of reviews: false negatives, false_positives.
+    It then goes through the list of reviews in each false positives, to see which
+    words in the reviews (other than words in stop words) a high likelihood p(w| + ). We do
+    the analagous task for the false negatives, and then return the top 10 words
+    for both categories based on likelihood. The idea is to see why bayes classified
+    these reviews incorrectly, i.e. which words are especially confusing to the model.
     '''
+    #TODO keep commenting here and rest of document. Left off here
     (false_pos, false_neg) = errors
     word_list, priors, likelihoods = load_output_bayes(trained_output_filename)
     (pos_likelihood, neg_likelihood) = likelihoods
@@ -223,6 +245,7 @@ def compare_models_correctness(test_data_filename, errors_bayes, errors_conj, er
             if review in false_neg_co and false_neg_conj:
                 shared_false_neg["conj_co"].append(review)
     return shared_false_pos, shared_false_neg
+
 
 def main():
     #TESTING
