@@ -245,30 +245,26 @@ def guess(positive, negative, review):
         if word in negative:
             num_neg_words += 1
 
-    # print(num_pos_words, num_neg_words)
     # If polarity 0, random guess
     if num_pos_words == num_neg_words or num_pos_words + num_neg_words == 0:
-        polarity = random.choice([-1, 1])
+        return random.choice(['-', '+'])
     else:
-        polarity = (num_pos_words - num_neg_words)/(num_pos_words + num_neg_words)
-
-    if polarity < 0:
-        return '-'
-    else:
-        return '+'
+        polarity = (num_pos_words - num_neg_words) / (num_pos_words + num_neg_words)
+        if polarity < 0:
+            return '-'
+        else:
+            return '+'
 
 
 def in_seed_dic(word):
     '''
     Returns '+' if word is in positive seed dic, '-' if word is in negative seed
-    dictionary, and False if it's in neither or both.
+    dictionary, and False if it's in neither.
     '''
     if word in negative_seeds:
-        if word not in positive_seeds:
-            return '-'
-    else:
-        if word in positive_seeds:
-            return '+'
+        return '-'
+    if word in positive_seeds:
+        return '+'
     return False
 
 
@@ -342,32 +338,36 @@ def test_model(trained_output_filename, test_data_filename):
     false_pos, false_neg = [], []  # list of reviews falsely categorized as positive/negative
 
     for review in reviews:
+
+        # Guess category
         sentiment = get_sentiment(review)
         if sentiment is 'n':
             continue
         model_guess = guess(positive, negative, review)
 
+        # Update counts of correct/incorrect guesses
         if sentiment is '+':
             total_pos += 1
             if model_guess is '+':
                 correct_pos += 1
             else:
-                false_neg.append(review)  # TODO trim content of review (maybe earlier in process)
-
+                false_neg.append(review)
         if sentiment is '-':
             total_neg += 1
             if model_guess is '-':
                 correct_neg += 1
             else:
                 false_pos.append(review)
+
+    # Compute accuracies
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
-        accuracy_pos = "N/A"  # TODO was getting division by 0 error - is this okay solution?
+        accuracy_pos = "N/A"
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg = "N/A"  # TODO see above
+        accuracy_neg =
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
