@@ -1,7 +1,7 @@
 import json
 import random
 
-# TODO ignore neutrals ??
+
 # TODO deal with encoding (/u00...)
 def random_sample_yelp_data(training_size, test_size):
     '''
@@ -67,7 +67,6 @@ def random_training_subset(filename, reviews_in_file, n):
     Roughly n/5 seconds
     '''
     training_data = []
-    test_data = []
     random_sample = random.sample(range(1, reviews_in_file), n)
     random.shuffle(random_sample)
 

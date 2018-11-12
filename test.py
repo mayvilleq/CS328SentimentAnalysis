@@ -10,7 +10,7 @@ from naive_bayes import normalize_word
 from dictionary_model import test_model as test_model_dict
 from seed_dictionaries import (
     negative_seeds, positive_seeds, stop_words
-)
+)  # TODO remove seed dictionary imports if unused
 import json
 
 
@@ -26,11 +26,12 @@ def test(trained_output_files_list, test_data_filename, file_to_write):
     file_to_write is the name of the output file to which we will write our results.
     '''
 
-    #Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
+    # Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
     for i in range(len(trained_output_files_list[0])):
         test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'accuracies')
         test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies')
         test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies')
+
 
 def error_analysis(trained_output_files_list, test_data_filename, file_to_write):
     '''
@@ -44,12 +45,13 @@ def error_analysis(trained_output_files_list, test_data_filename, file_to_write)
     file_to_write is the name of the output file to which we will write our analysis.
     '''
 
-    #Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
+    # Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
     for i in range(len(trained_output_files_list[0])):
         test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'errors')
         test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'errors')
         test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'errors')
         compare_across_models_print([trained_output_files_list[0][i], trained_output_files_list[1][i], trained_output_files_list[2][i]], test_data_filename, file_to_write)
+
 
 def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
@@ -66,6 +68,7 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_
         top_10_false_lists = analyze_false_categorizations_bayes(errors, trained_output_filename)
         print_error_analysis(errors, top_10_false_lists, file_to_write, "Naive Bayes", trained_output_filename)
 
+
 def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
     Helper function for test(). Takes in a trained output file, testing data file,
@@ -80,6 +83,7 @@ def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_wr
     elif type_of_test is 'errors':
         top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
         print_error_analysis(errors, top_10_false_lists, file_to_write, "Dictionary Model: Conjunction", trained_output_filename)
+
 
 def test_dictionary_co(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
@@ -106,7 +110,7 @@ def print_result(accuracies, file_to_write, model_title, trained_output_filename
     training size.
     '''
     # Unload accuracies
-    (accuracy_total, accuracy_pos, accuracy_neg) = accuracies
+    accuracy_total, accuracy_pos, accuracy_neg = accuracies
 
     # Append results to file_to_write
     f = open(file_to_write, 'a')
@@ -115,6 +119,7 @@ def print_result(accuracies, file_to_write, model_title, trained_output_filename
     f.write("Positive Accuracy: " + str(accuracy_pos) + "\n")
     f.write(" Negative Accuracy: " + str(accuracy_neg) + "\n")
     f.write("\n \n ")
+
 
 def analyze_false_categorizations_bayes(errors, trained_output_filename):
     '''
@@ -131,7 +136,7 @@ def analyze_false_categorizations_bayes(errors, trained_output_filename):
     word_list, priors, likelihoods = load_output_bayes(trained_output_filename)
     (pos_likelihood, neg_likelihood) = likelihoods
 
-    #pos_likelihood_dict will store words as keys with (positive likelihood  - negative likelihood)
+    # pos_likelihood_dict will store words as keys with (positive likelihood  - negative likelihood)
     # as the value. Similar for neg_likelihood_dict
     pos_likelihood_dict, neg_likelihood_dict = {}, {}
 
@@ -146,9 +151,9 @@ def analyze_false_categorizations_bayes(errors, trained_output_filename):
                 if pos_likelihood_dict.get(word) is None:
                     pos_likelihood_dict[word] = pos_likelihood[word_index] - neg_likelihood[word_index]
 
-    #Do same for false negatives
+    # Do same for false negatives
     for review in false_neg:
-        #Look for words with high negative likelihood
+        # Look for words with high negative likelihood
         words = review["text"].split()
         for word in words:
             word = normalize_word(word)
@@ -157,14 +162,13 @@ def analyze_false_categorizations_bayes(errors, trained_output_filename):
                 if neg_likelihood_dict.get(word) is None:
                     neg_likelihood_dict[word] = neg_likelihood[word_index] - pos_likelihood[word_index]
 
-    #Get top 10 confusing words for both cases
+    # Get top 10 confusing words for both cases
     pos_likelihood_sorted = sorted(pos_likelihood_dict, key=pos_likelihood_dict.get)
     neg_likelihood_sorted = sorted(neg_likelihood_dict, key=neg_likelihood_dict.get)
     top_10_false_pos = pos_likelihood_sorted[-20:]
     top_10_false_neg = neg_likelihood_sorted[-20:]
 
     return (top_10_false_pos, top_10_false_neg)
-
 
 
 def analyze_false_categorizations_dict(errors, trained_output_filename):
@@ -178,7 +182,7 @@ def analyze_false_categorizations_dict(errors, trained_output_filename):
     '''
 
     # unload parameters
-    (false_pos, false_neg) = errors
+    false_pos, false_neg = errors
     positive, negative = load_output_dict(trained_output_filename)
 
     # pos_count_dict will store words in false positive reviews that are in
@@ -217,6 +221,7 @@ def analyze_false_categorizations_dict(errors, trained_output_filename):
 
     return (top_10_false_pos, top_10_false_neg)
 
+
 def compare_across_models_print(trained_output_files_list, test_data_filename, file_to_write):
     '''
     Writes to file_to_write the size of shared false positives and shared false negatives
@@ -224,28 +229,28 @@ def compare_across_models_print(trained_output_files_list, test_data_filename, f
     trained_output files in the order [bayes, conjunction, co-occurrence].
     '''
 
-    #Gathers errors (false positives, false negatives)
+    # Gathers errors (false positives, false negatives)
     errors_bayes = test_model_bayes(trained_output_files_list[0], test_data_filename)[1]
     errors_conj = test_model_dict(trained_output_files_list[1], test_data_filename)[1]
     errors_co = test_model_dict(trained_output_files_list[2], test_data_filename)[1]
 
-    #Calls helper function to get overlap sizes
+    # Calls helper function to get overlap sizes
     shared_false_pos, shared_false_neg = compare_models_correctness(test_data_filename, errors_bayes, errors_conj, errors_co)
 
-    #Write overlap to file_to_write
+    # Write overlap to file_to_write
     f = open(file_to_write, 'a')
     f.write("Comparing Across Models with training files: " + trained_output_files_list[0] + ", " + trained_output_files_list[1] + ", " + trained_output_files_list[2] + "\n")
     f.write("Number of False Positives Misclassified by: \n")
     f.write("Bayes + Conj only: " + str(len(shared_false_pos["bayes_conj"])) + "\n")
-    f.write("Bayes + Co-occurr only: " + str(len(shared_false_pos["bayes_co"]))+ "\n")
-    f.write("Co-occurr + Conj only: " + str(len(shared_false_pos["conj_co"]))+ "\n")
-    f.write("All three: " + str(len(shared_false_pos["bayes_conj_co"]))+ "\n")
-    f.write("-------------------------------------------------"+ "\n")
-    f.write("Number of False Negatives Misclassified by: "+ "\n")
-    f.write("Bayes + Conj only: " + str(len(shared_false_neg["bayes_conj"]))+ "\n")
-    f.write("Bayes + Co-occurr only: " + str(len(shared_false_neg["bayes_co"]))+ "\n")
-    f.write("Co-occurr + Conj only: " + str(len(shared_false_neg["conj_co"])) +  "\n")
-    f.write("All three: " +  str(len(shared_false_neg["bayes_conj_co"])) + "\n \n")
+    f.write("Bayes + Co-occurr only: " + str(len(shared_false_pos["bayes_co"])) + "\n")
+    f.write("Co-occurr + Conj only: " + str(len(shared_false_pos["conj_co"])) + "\n")
+    f.write("All three: " + str(len(shared_false_pos["bayes_conj_co"])) + "\n")
+    f.write("-------------------------------------------------" + "\n")
+    f.write("Number of False Negatives Misclassified by: " + "\n")
+    f.write("Bayes + Conj only: " + str(len(shared_false_neg["bayes_conj"])) + "\n")
+    f.write("Bayes + Co-occurr only: " + str(len(shared_false_neg["bayes_co"])) + "\n")
+    f.write("Co-occurr + Conj only: " + str(len(shared_false_neg["conj_co"])) + "\n")
+    f.write("All three: " + str(len(shared_false_neg["bayes_conj_co"])) + "\n \n")
 
 
 def compare_models_correctness(test_data_filename, errors_bayes, errors_conj, errors_co):
@@ -258,19 +263,19 @@ def compare_models_correctness(test_data_filename, errors_bayes, errors_conj, er
     '''
 
     # unload parameters
-    (false_pos_bayes, false_neg_bayes) = errors_bayes
-    (false_pos_conj, false_neg_conj) = errors_conj
-    (false_pos_co, false_neg_co) = errors_co
+    false_pos_bayes, false_neg_bayes = errors_bayes
+    false_pos_conj, false_neg_conj = errors_conj
+    false_pos_co, false_neg_co = errors_co
 
     # get list of reviews to read through
     with open(test_data_filename) as test_data_file:
         reviews = json.loads(test_data_file.read())
 
-    #set up dictionaries (described in function comment)
+    # set up dictionaries (described in function comment)
     shared_false_pos = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
     shared_false_neg = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
 
-    #Iterate through each review in test data, adding to a category in a dictionary, if appropriate
+    # Iterate through each review in test data, adding to a category in a dictionary, if appropriate
     for review in reviews:
 
         # Check false positives
@@ -313,8 +318,8 @@ def print_error_analysis(errors, top_10_false_lists, file_to_write, model_title,
     '''
 
     # unload parameters
-    (false_pos, false_neg) = errors
-    (top_10_false_pos, top_10_false_neg) = top_10_false_lists
+    false_pos, false_neg = errors
+    top_10_false_pos, top_10_false_neg = top_10_false_lists
 
     # Append results to file_to_write
     f = open(file_to_write, 'a')
@@ -342,5 +347,7 @@ def main():
     test(trained_output_files_list, test_data_filename, file_to_write_accuracies)
     error_analysis(trained_output_files_list, test_data_filename, file_to_write_errors)
 
+
+# TODO remove main
 if __name__ == '__main__':
     main()

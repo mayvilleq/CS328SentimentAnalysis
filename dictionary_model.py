@@ -399,5 +399,6 @@ def main():
     print('---------------------')
 
 
+# TODO remove main
 if __name__ == '__main__':
     main()

@@ -1,6 +1,7 @@
 import json
 import string
 
+
 def train_model(training_data_filename, output_filename):
     '''
     Trains the Naive Bayes model based on the data provided in the given training
@@ -129,7 +130,7 @@ def test_model(trained_output_filename, test_data_filename):
             if model_guess is '+':
                 correct_pos += 1
             else:
-                false_neg.append(review)  # TODO trim content of review (maybe earlier in process)
+                false_neg.append(review)
 
         if sentiment is '-':
             total_neg += 1
@@ -140,11 +141,11 @@ def test_model(trained_output_filename, test_data_filename):
     if total_pos != 0:
         accuracy_pos = correct_pos / total_pos
     else:
-        accuracy_pos = "N/A"  # TODO was getting division by 0 error - is this okay solution?
+        accuracy_pos = "N/A"
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg = "N/A"  # TODO see above
+        accuracy_neg = "N/A"
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
@@ -177,6 +178,7 @@ def guess_function(review, word_list, prior, likelihood):
         return '-'
 
 
+# TODO remove unused guess function (not sure which one)
 def guess_2_function(review, word_list, prior, likelihood):
     '''
     guess_2_function() performs same function as guess_function(), but here were try with different
@@ -223,6 +225,7 @@ def review_to_word_vector(review, word_list):
     return word_vector
 
 
+# TODO remove main
 def main():
     # TESTING
     training_data_file = 'training_data/yelp_training_sample_1000.json'
