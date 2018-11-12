@@ -215,18 +215,12 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
 
-def guess(positive, negative, review, threshold=None):
+
+def guess(positive, negative, review):
     '''
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula for Polarity from Rice-Zorn paper)
     '''
-    if threshold is not None:
-        #TODO sort positive and negative list based on threshold if not
-        #done in co-occurrence model - left for now - in test.py i assume this
-        #is not done here in test.py
-        positive = positive
-        negative = negative
-
     num_pos_words, num_neg_words = 0,0
     words = review["text"].split()
     for word in words:
@@ -236,18 +230,17 @@ def guess(positive, negative, review, threshold=None):
         if word in negative:
             num_neg_words += 1
 
-    # If polarity 0, random guess
     # print(num_pos_words, num_neg_words)
-    if num_pos_words + num_neg_words == 0:
-        polarity = random.choice([-1,1])
+    # If polarity 0, random guess
+    if num_pos_words == num_neg_words or num_pos_words + num_neg_words == 0:
+        polarity = random.choice([-1, 1])
     else:
         polarity = (num_pos_words - num_neg_words)/(num_pos_words + num_neg_words)
 
-    #TODO  ASK ANNA - we think symmetric, but unsure if window we classify as 0.
-    #Decide threshold
-    if polarity <= 0:
+    if polarity < 0:
         return '-'
-    return '+'
+    else:
+        return '+'
 
 
 def in_seed_dic(word):
@@ -359,15 +352,14 @@ def main():
     # train_conjunction_model(training_data_file, output_file)
     output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_10000.json'
     train_cooccurrence_model(training_data_file, output_file_2)
-    #
-    # accuracies, errors = test_model(output_file, test_data_file)
-    # accuracy_total, accuracy_pos, accuracy_neg = accuracies
-    # print('-----CONJUNCTIVE-----')
-    # print('Total Accuracy: ', accuracy_total)
-    # print('Positive Accuracy: ', accuracy_pos)
-    # print('Negative Accuracy: ', accuracy_neg)
-    # print('---------------------')
 
+    accuracies, errors = test_model(output_file, test_data_file)
+    accuracy_total, accuracy_pos, accuracy_neg = accuracies
+    print('-----CONJUNCTIVE-----')
+    print('Total Accuracy: ', accuracy_total)
+    print('Positive Accuracy: ', accuracy_pos)
+    print('Negative Accuracy: ', accuracy_neg)
+    print('---------------------')
 
     accuracies, errors = test_model(output_file_2, test_data_file)
     accuracy_total, accuracy_pos, accuracy_neg = accuracies
