@@ -102,7 +102,7 @@ def train_conjunction_model(training_data_filename, output_filename):
         json.dump(trained_data, outfile)
 
 
-def train_cooccurrence_model(training_data_filename, output_filename, threshold=0):
+def train_cooccurrence_model(training_data_filename, output_filename):
     '''
     Trains the co-occurrence dictionary model based on the data provided in the given training
     data file. Writes the components of the trained model out to the given output file.
@@ -111,116 +111,124 @@ def train_cooccurrence_model(training_data_filename, output_filename, threshold=
         reviews = json.loads(data_file.read())
 
     word_list = []  # list of all words in reviews
-    num_pos, num_neg = 0, 0  # counts of reviews containing positive and negative seed words
+    num_pos_reviews, num_neg_reviews = 0, 0  # counts of reviews containing positive and negative seed words
     word_count_pos, word_count_neg = [], []  # counts of reviews in which word (corresponding to word_list) co-occurrs with pos/neg words
 
     for review in reviews:
-        pos, neg = False, False  # does review contain pos/neg seed word?
+        pos_seed, neg_seed = False, False  # does review contain pos/neg seed word?
         original_words = word_tokenize(review['text'])
         words = negations(original_words)
+
         # Check if a pos/neg seed word in review
         for word in words:
             word = normalize_word(word)
             if word is '':
                 continue
-            if word in positive_seeds and not pos:
+            if word in positive_seeds and not pos_seed:
                 pos = True
-                num_pos += 1
-            if word in negative_seeds and not neg:
+                num_pos_reviews += 1
+            if word in negative_seeds and not neg_seed:
                 neg = True
-                num_neg += 1
+                num_neg_reviews += 1
             if pos and neg:
                 break
 
-        found = {}  # track whether words found  in review to avoid double counting
+        found = {}  # track whether words found in review to avoid double counting
 
-        # Update word counts if seed word in review
+        # Update co-occurrence word counts if seed word in review
         if pos or neg:
             parts_of_speech = pos_tag(original_words)
             for i, word in enumerate(words):
                 word = normalize_word(word)
-                if word is '' or word in stop_words:
-                    continue
-                if word in positive_seeds or word in negative_seeds:  # skip seed words
-                    continue
-                if found.get(word, False):  # avoid double counting words
-                    continue
-                if parts_of_speech[i][1] not in valid_pos:
+
+                # Skip invalid words
+                if any((
+                    word is '',
+                    word in stop_words,
+                    word in positive_seeds,
+                    word in negative_seeds,
+                    parts_of_speech[i][1] not in valid_pos,
+                    found.get(word, False),  # avoid double counting words
+                )):
                     continue
 
                 # Get index of word in word list
-                if word not in word_list:
+                try:
+                    index = word_list.index(word)
+                except ValueError:
                     word_list.append(word)
                     word_count_pos.append(0)
                     word_count_neg.append(0)
                     index = len(word_list) - 1
-                else:
-                    index = word_list.index(word)
 
-                # Update co-occurrence word counts
+                # Update co-occurrence word counts and mark as found
                 if pos:
                     word_count_pos[index] += 1
                 if neg:
                     word_count_neg[index] += 1
                 found[word] = True
 
-    # Compute word polarities
-    polarities = []
-    for pos_count, neg_count in zip(word_count_pos, word_count_neg):
-        proportion_pos = pos_count / num_pos
-        proportion_neg = neg_count / num_neg
-        odds_pos = proportion_pos / (1 - proportion_pos)
-        odds_neg = proportion_neg / (1 - proportion_neg)
-        if odds_neg == odds_pos:
-            polarity = 0
-        elif odds_neg == 0:
-            # odds_neg = 1 / (num_neg + len(reviews))
-            # ratio = log(odds_pos / odds_neg)
-            # polarity = (pos_count + neg_count) * ratio
-            polarity = float('inf')
-        elif odds_pos == 0:
-            # odds_pos = 1 / (num_pos + len(reviews))
-            # ratio = log(odds_pos / odds_neg)
-            # polarity = (pos_count + neg_count) * ratio
-            polarity = float('-inf')
-        else:
-            ratio = log(odds_pos / odds_neg)
-            polarity = (pos_count + neg_count) * ratio
-        polarities.append(polarity)
+    positive, negative = [], []  # context specific sentiment dictionaries
+    polarities = compute_polarities(num_pos_reviews, num_neg_reviews, word_count_pos, word_count_neg)
 
-    # Add words to dictionaries based on polarity. Only consider words that co-occur more than once
-    positive, negative = set(), set()
-    for i, (word, polarity) in enumerate(zip(word_list, polarities)):
-        if polarity < (- threshold) and word_count_neg[i] > (num_neg / 300):
-            negative.add((word, polarity))
-            # print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
-        if polarity > threshold and word_count_pos[i] > (num_pos / 300):
-            positive.add((word, polarity))
-            # print('Word:', word, 'Polarity:', polarity, 'Pos Count:', word_count_pos[i], 'Neg Count:', word_count_neg[i])
+    # Add words to dictionaries based on polarity
+    # Only add words that co-occur above a threshold number of times
+    for i, polarity in enumerate(polarities):
+        if polarity < 0 and word_count_neg[i] > (num_neg_reviews / 300):
+            negative.add((word_list[i], polarity))
+        if polarity > 0 and word_count_pos[i] > (num_pos_reviews / 300):
+            positive.add((word_list[i], polarity))
 
-    print('Num Pos/Neg Seed word Reviews', num_pos, num_neg)
-    # print(list(positive)[0])
-    # print(negative)
-    positive = list(positive)
-    negative = list(negative)
+    # Sort dictionaries by polarity
     positive.sort(key=lambda x: x[1])
     negative.sort(key=lambda x: x[1])
+
+    # Trim dictionaries to top 200 (or min dic length) words
     min_length = min(len(positive), len(negative))
     if min_length < 200:
         positive = positive[-min_length:]
         negative = negative[:min_length]
     else:
         positive = positive[-200:]
-        negative = negative[:200]  # TODO update from 200 to variable amount??
-    # print(len(positive), len(negative))
+        negative = negative[:200]
+
+    # Unzip to remove polarities from dictionary
     positive, _ = zip(*positive)
     negative, _ = zip(*negative)
-    print('Dictionary Size: ', len(positive), len(negative))
 
     # Write out trained data
     trained_data = {'positive': list(positive) + positive_seeds, 'negative': list(negative) + negative_seeds}
     with open(output_filename, 'w') as outfile:
         json.dump(trained_data, outfile)
+
+
+def compute_polarities(num_pos_reviews, num_neg_reviews, word_count_pos, word_count_neg):
+    '''
+    Returns a list of word polarities based on the given counts of positive and
+    negative reviews and the lists of cooccurence word counts. Order of polarities
+    list corresponds to the order of the word count lists.
+    '''
+    polarities = []
+    for pos_count, neg_count in zip(word_count_pos, word_count_neg):
+
+        # Compute odds
+        proportion_pos = pos_count / num_pos_reviews
+        proportion_neg = neg_count / num_neg_reviews
+        odds_pos = proportion_pos / (1 - proportion_pos)
+        odds_neg = proportion_neg / (1 - proportion_neg)
+
+        # Compute polarity
+        if odds_neg == odds_pos:
+            polarity = 0
+        elif odds_neg == 0:
+            polarity = float('inf')
+        elif odds_pos == 0:
+            polarity = float('-inf')
+        else:
+            ratio = log(odds_pos / odds_neg)
+            polarity = (pos_count + neg_count) * ratio
+        polarities.append(polarity)
+    return polarities
 
 
 def guess(positive, negative, review):
@@ -312,8 +320,8 @@ def negations(word_tokens):
         elif token in string.punctuation:
             negated = False
         elif negated:
-            word = 'not-' + token
-        result.append(word)
+            negated_word = 'not-' + token
+        result.append(negated_word)
     return result
 
 
