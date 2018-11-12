@@ -12,10 +12,10 @@ from nltk import (pos_tag, word_tokenize)
 # if we want/have timeself.
 # TODO can also look at LIWC like paper does for more seed dictionaries/can
 # test this dictionary like they did.
-# TODO part of speech (only look at adverbs, adjectives, nouns)
 
-# valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'NN', 'NNS', 'NNP', 'NNPS', 'UH']
+# Valids of part of speech - only look at adverbs, adjectives, and nouns (for conjunctive only)
 valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'UH']
+nouns = ['NN', 'NNS', 'NNP', 'NNPS']
 
 
 def train_conjunction_model(training_data_filename, output_filename):
@@ -30,53 +30,48 @@ def train_conjunction_model(training_data_filename, output_filename):
     positive, negative = {}, {}  # context specific sentiment dictionaries
 
     for review in reviews:
-        words = review["text"].split()
+        words = word_tokenize(review['text'])
+        parts_of_speech = pos_tag(words)
         for i, word in enumerate(words):
             normalized_word = normalize_word(word)
-            if normalized_word is '':
-                continue
 
             seed_sentiment = in_seed_dic(normalized_word)
             # TODO deal with punctuation
             if seed_sentiment:
                 if i != 0:
-                    prev_word = words[i-1]
+                    prev_word = normalize_word(words[i-1])
                 else:
                     prev_word = None
                 if i != len(words) - 1:
-                    next_word = words[i+1]
+                    next_word = normalize_word(words[i+1])
                 else:
                     next_word = None
                 if seed_sentiment == '-':
-                    if prev_word and (prev_word.lower() == normalize_word(prev_word)):
-                        prev_word = normalize_word(prev_word)
+                    if prev_word and prev_word not in string.punctuation:
                         #TODO added this next line because we were getting empty strings in negative and pos. dictionaries.
-                        if prev_word is not '' and prev_word not in stop_words:
+                        if prev_word is not '' and prev_word not in stop_words and parts_of_speech[i-1][1] in valid_pos+nouns:
                             if negative.get(prev_word) is None:
                                 negative[prev_word] = 1
                             else:
                                 negative[prev_word] += 1
                             #negative.add(normalize_word(prev_word))
-                    if next_word and (word.lower() == normalized_word):
-                        next_word = normalize_word(next_word)
-                        if next_word is not '' and next_word not in stop_words:
+                    if next_word and next_word not in string.punctuation:
+                        if next_word is not '' and next_word not in stop_words and parts_of_speech[i+1][1] in valid_pos+nouns:
                             if negative.get(next_word) is None:
                                 negative[next_word] = 1
                             else:
                                 negative[next_word] += 1
                             #negative.add(normalize_word(next_word))
                 if seed_sentiment == '+':
-                    if prev_word and (prev_word.lower() == normalize_word(prev_word)):
-                        prev_word = normalize_word(prev_word)
-                        if prev_word is not '' and prev_word not in stop_words:
+                    if prev_word and prev_word not in string.punctuation:
+                        if prev_word is not '' and prev_word not in stop_words and parts_of_speech[i-1][1] in valid_pos+nouns:
                             if positive.get(prev_word) is None:
                                 positive[prev_word] = 1
                             else:
                                 positive[prev_word] += 1
                             #positive.add(normalize_word(prev_word))
-                    if next_word and (word.lower() == normalized_word):
-                        next_word = normalize_word(next_word)
-                        if next_word is not '' and next_word not in stop_words:
+                    if next_word and next_word not in string.punctuation:
+                        if next_word is not '' and next_word not in stop_words and parts_of_speech[i+1][1] in valid_pos+nouns:
                             if positive.get(next_word) is None:
                                 positive[next_word] = 1
                             else:
@@ -84,10 +79,18 @@ def train_conjunction_model(training_data_filename, output_filename):
                             #positive.add(normalize_word(next_word))
 
     #TODO how to break ties??
-    positive = sorted(positive, key = positive.get)
-    negative = sorted(negative, key = negative.get)
-    positive = positive[-200:]
-    negative = negative[-200:]
+    positive = sorted(positive, key=positive.get)
+    negative = sorted(negative, key=negative.get)
+    min_length = min(len(positive), len(negative))
+    if min_length < 200:
+        positive = positive[-min_length:]
+        negative = negative[-min_length:]
+    else:
+        positive = positive[-200:]
+        negative = negative[-200:]  # TODO update from 200 to variable amount??
+
+
+
     # print(len(positive), len(negative))
 
     # Write out trained data
@@ -221,7 +224,7 @@ def guess(positive, negative, review):
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula for Polarity from Rice-Zorn paper)
     '''
-    num_pos_words, num_neg_words = 0,0
+    num_pos_words, num_neg_words = 0, 0
     words = review["text"].split()
     for word in words:
         word = normalize_word(word)
@@ -294,6 +297,20 @@ def get_sentiment(review):
     return sentiment
 
 
+def negations(words):
+    negated = False
+    result = []
+    for word in words:
+        if word in ['no', 'not']:
+            negated = True
+        elif word in string.punctuation:
+            negated = False
+        elif negated:
+            word = 'not-' + word
+        result.append(words)
+    return result
+
+
 def test_model(trained_output_filename, test_data_filename):
     '''
     Tests the model represented by the given trained ouput file against the given
@@ -349,7 +366,7 @@ def main():
     training_data_file = 'training_data/yelp_training_sample_10000.json'
     output_file = 'trained_dictionary_output/trained_conjunction_model_10000.json'
     test_data_file = 'test_data/yelp_test_sample_1000.json'
-    # train_conjunction_model(training_data_file, output_file)
+    train_conjunction_model(training_data_file, output_file)
     output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_10000.json'
     train_cooccurrence_model(training_data_file, output_file_2)
 
