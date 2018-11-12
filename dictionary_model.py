@@ -48,8 +48,7 @@ def train_conjunction_model(training_data_filename, output_filename):
                     next_word = None
 
                 # If previous word is valid, add to corresponding dictionary
-                if all((
-                    prev_word,
+                if prev_word and all((
                     prev_word not in string.punctuation,
                     prev_word not in stop_words,
                     parts_of_speech[i-1][1] in (valid_pos + nouns),
@@ -66,8 +65,7 @@ def train_conjunction_model(training_data_filename, output_filename):
                             positive[prev_word] += 1
 
                 # If next word is valid, add to corresponding dictionary
-                if all((
-                    next_word,
+                if next_word and all((
                     next_word not in string.punctuation,
                     next_word not in stop_words,
                     parts_of_speech[i-1][1] in (valid_pos + nouns),
@@ -125,18 +123,18 @@ def train_cooccurrence_model(training_data_filename, output_filename):
             if word is '':
                 continue
             if word in positive_seeds and not pos_seed:
-                pos = True
+                pos_seed = True
                 num_pos_reviews += 1
             if word in negative_seeds and not neg_seed:
-                neg = True
+                neg_seed = True
                 num_neg_reviews += 1
-            if pos and neg:
+            if pos_seed and neg_seed:
                 break
 
         found = {}  # track whether words found in review to avoid double counting
 
         # Update co-occurrence word counts if seed word in review
-        if pos or neg:
+        if pos_seed or neg_seed:
             parts_of_speech = pos_tag(original_words)
             for i, word in enumerate(words):
                 word = normalize_word(word)
@@ -162,9 +160,9 @@ def train_cooccurrence_model(training_data_filename, output_filename):
                     index = len(word_list) - 1
 
                 # Update co-occurrence word counts and mark as found
-                if pos:
+                if pos_seed:
                     word_count_pos[index] += 1
-                if neg:
+                if neg_seed:
                     word_count_neg[index] += 1
                 found[word] = True
 
@@ -175,9 +173,9 @@ def train_cooccurrence_model(training_data_filename, output_filename):
     # Only add words that co-occur above a threshold number of times
     for i, polarity in enumerate(polarities):
         if polarity < 0 and word_count_neg[i] > (num_neg_reviews / 300):
-            negative.add((word_list[i], polarity))
+            negative.append((word_list[i], polarity))
         if polarity > 0 and word_count_pos[i] > (num_pos_reviews / 300):
-            positive.add((word_list[i], polarity))
+            positive.append((word_list[i], polarity))
 
     # Sort dictionaries by polarity
     positive.sort(key=lambda x: x[1])
@@ -310,14 +308,14 @@ def negations(word_tokens):
     '''
     negated = False
     result = []
-    for token in word_tokens:
-        if token in ['no', 'not']:
+    for word in word_tokens:
+        if word in ['no', 'not']:
             negated = True
-        elif token in string.punctuation:
+        elif word in string.punctuation:
             negated = False
         elif negated:
-            negated_word = 'not-' + token
-        result.append(negated_word)
+            word = 'not-' + word
+        result.append(word)
     return result
 
 
@@ -367,7 +365,7 @@ def test_model(trained_output_filename, test_data_filename):
     if total_neg != 0:
         accuracy_neg = correct_neg / total_neg
     else:
-        accuracy_neg =
+        accuracy_neg = "N/A"
     accuracy_total = (correct_pos + correct_neg) / (total_pos + total_neg)
 
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
