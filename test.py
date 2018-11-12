@@ -14,7 +14,7 @@ from seed_dictionaries import (
 import json
 
 
-def test(trained_output_files_list, test_data_filename, file_to_write):
+def test(trained_output_files_list, test_data_filename, file_to_write, indices_for_error_analysis):
     '''
     Tests all three models on the reviews in test_data_filename.
 
@@ -28,29 +28,15 @@ def test(trained_output_files_list, test_data_filename, file_to_write):
 
     # Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
     for i in range(len(trained_output_files_list[0])):
-        test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'accuracies')
-        test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies')
-        test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies')
-
-
-def error_analysis(trained_output_files_list, test_data_filename, file_to_write):
-    '''
-    Tests all three models for error anlaysis.
-
-    trained_output_files_list is a 2-D list of the trained output files for each
-    model in the order [naive_bayes, conjunction_dictionary, coccurrence_dictionary]
-    where each inner list is a list of trained output files associated with that model
-    varying with size of training data. We will assume each of these inner lists
-    is of the same length and represents the same size order (increasing).
-    file_to_write is the name of the output file to which we will write our analysis.
-    '''
-
-    # Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
-    for i in range(len(trained_output_files_list[0])):
-        test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'errors')
-        test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'errors')
-        test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'errors')
-        compare_across_models_print([trained_output_files_list[0][i], trained_output_files_list[1][i], trained_output_files_list[2][i]], test_data_filename, file_to_write)
+        if i not in indices_for_error_analysis:
+            test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'accuracies')
+            test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies')
+            test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies')
+        else:
+            errors_bayes = test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'errors')
+            errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'errors')
+            errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'errors')
+            compare_across_models_print([trained_output_files_list[0][i], trained_output_files_list[1][i], trained_output_files_list[2][i]], errors_bayes, errors_conj, errors_co, test_data_filename, file_to_write)
 
 
 def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_of_test):
@@ -62,12 +48,13 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_
     (through print_error_analysis) if the type of test is 'errors.'
     '''
     accuracies, errors = test_model_bayes(trained_output_filename, test_data_filename)
-    if type_of_test is 'accuracies':
+    if type_of_test is 'errors':
         print_result(accuracies, file_to_write, "Naive Bayes", trained_output_filename)
-    elif type_of_test is 'errors':
         top_10_false_lists = analyze_false_categorizations_bayes(errors, trained_output_filename)
         print_error_analysis(errors, top_10_false_lists, file_to_write, "Naive Bayes", trained_output_filename)
-
+    else:
+        print_result(accuracies, file_to_write, "Naive Bayes", trained_output_filename)
+    return errors
 
 def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
@@ -78,12 +65,14 @@ def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_wr
     (through print_error_analysis) if the type of test is 'errors.'
     '''
     accuracies, errors = test_model_dict(trained_output_filename, test_data_filename)
-    if type_of_test is 'accuracies':
+    if type_of_test is 'errors':
         print_result(accuracies, file_to_write, "Dictionary Model: Conjunction", trained_output_filename)
-    elif type_of_test is 'errors':
         top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
         print_error_analysis(errors, top_10_false_lists, file_to_write, "Dictionary Model: Conjunction", trained_output_filename)
+    else:
+        print_result(accuracies, file_to_write, "Dictionary Model: Conjunction", trained_output_filename)
 
+    return errors
 
 def test_dictionary_co(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
@@ -94,12 +83,13 @@ def test_dictionary_co(trained_output_filename, test_data_filename, file_to_writ
     (through print_error_analysis) if the type of test is 'errors.'
     '''
     accuracies, errors = test_model_dict(trained_output_filename, test_data_filename)
-    if type_of_test is 'accuracies':
+    if type_of_test is 'errors':
         print_result(accuracies,  file_to_write, "Dictionary Model: Co-occurrence", trained_output_filename)
-    elif type_of_test is 'errors':
         top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
         print_error_analysis(errors, top_10_false_lists, file_to_write, "Dictionary Model: Co-occurrence", trained_output_filename)
-
+    else:
+        print_result(accuracies,  file_to_write, "Dictionary Model: Co-occurrence", trained_output_filename)
+    return errors
 
 def print_result(accuracies, file_to_write, model_title, trained_output_filename):
     '''
@@ -117,7 +107,7 @@ def print_result(accuracies, file_to_write, model_title, trained_output_filename
     f.write(model_title + " with training file: " + trained_output_filename + "\n")
     f.write("Total Accuracy: " + str(accuracy_total) + "\n")
     f.write("Positive Accuracy: " + str(accuracy_pos) + "\n")
-    f.write(" Negative Accuracy: " + str(accuracy_neg) + "\n")
+    f.write("Negative Accuracy: " + str(accuracy_neg) + "\n")
     f.write("\n \n ")
 
 
@@ -222,17 +212,11 @@ def analyze_false_categorizations_dict(errors, trained_output_filename):
     return (top_10_false_pos, top_10_false_neg)
 
 
-def compare_across_models_print(trained_output_files_list, test_data_filename, file_to_write):
+def compare_across_models_print(trained_output_files_list, errors_bayes, errors_conj, errors_co, test_data_filename, file_to_write):
     '''
     Writes to file_to_write the size of shared false positives and shared false negatives
-    between each subset of the three models. trained_output_files_list is assumed to contain
-    trained_output files in the order [bayes, conjunction, co-occurrence].
+    between each subset of the three models.
     '''
-
-    # Gathers errors (false positives, false negatives)
-    errors_bayes = test_model_bayes(trained_output_files_list[0], test_data_filename)[1]
-    errors_conj = test_model_dict(trained_output_files_list[1], test_data_filename)[1]
-    errors_co = test_model_dict(trained_output_files_list[2], test_data_filename)[1]
 
     # Calls helper function to get overlap sizes
     shared_false_pos, shared_false_neg = compare_models_correctness(test_data_filename, errors_bayes, errors_conj, errors_co)
@@ -340,12 +324,10 @@ def print_error_analysis(errors, top_10_false_lists, file_to_write, model_title,
 
 def main():
     trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
-    file_to_write_accuracies = "testing_test_accuracies.txt"
-    file_to_write_errors = "testing_test_errors.txt"
+    file_to_write = "testing_test.txt"
     test_data_filename = "test_data/yelp_test_sample_1000.json"
 
-    test(trained_output_files_list, test_data_filename, file_to_write_accuracies)
-    error_analysis(trained_output_files_list, test_data_filename, file_to_write_errors)
+    test(trained_output_files_list, test_data_filename, file_to_write, [0])
 
 
 # TODO remove main
