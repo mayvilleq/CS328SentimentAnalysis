@@ -335,16 +335,3 @@ def print_error_analysis(errors, top_10_false_lists, file_to_write, model_title,
     f.write("Top 10 words contributing to false negatives: \n")
     f.write(json.dumps(top_10_false_neg))
     f.write("\n \n ")
-
-
-def main():
-    trained_output_files_list = [["trained_bayes_output/trained_bayes_50.json", "trained_bayes_output/trained_bayes_100.json"], ["trained_conjunction_output/trained_conjunction_50.json", "trained_conjunction_output/trained_conjunction_100.json"], ["trained_cooccurrence_output/trained_cooccurrence_50.json", "trained_cooccurrence_output/trained_cooccurrence_100.json"]]
-    files_to_write = ["testing_test_50.txt", "testing_test_100.txt"]
-    test_data_filename = "test_data/yelp_test_sample_1000.json"
-
-    test(trained_output_files_list, test_data_filename, files_to_write, [1])
-
-
-# TODO remove main
-if __name__ == '__main__':
-    main()

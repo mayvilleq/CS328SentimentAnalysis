@@ -7,9 +7,6 @@ from seed_dictionaries import (
     negative_seeds, positive_seeds, stop_words,
 )
 
-# TODO can also look at LIWC like paper does for more seed dictionaries/can
-# test this dictionary like they did.
-
 # Valids of part of speech - only look at adverbs, adjectives
 valid_pos = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'UH']
 nouns = ['NN', 'NNS', 'NNP', 'NNPS']  # Include nouns for conjunctive model
@@ -342,7 +339,6 @@ def test_model(trained_output_filename, test_data_filename, threshold = 0):
         if sentiment is 'n':
             continue
 
-        #TODO can add threshold below if want to
         model_guess = guess(positive, negative, review)
 
         # Update counts of correct/incorrect guesses
@@ -373,34 +369,3 @@ def test_model(trained_output_filename, test_data_filename, threshold = 0):
     accuracies = (accuracy_total, accuracy_pos, accuracy_neg)
     errors = (false_pos, false_neg)
     return accuracies, errors
-
-
-def main():
-    # TESTING
-    training_data_file = 'training_data/yelp_training_sample_1000total_648pos_352neg.json'
-    output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
-    test_data_file = 'test_data/yelp_test_sample_1000.json'
-    train_conjunction_model(training_data_file, output_file)
-    output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_1000.json'
-    train_cooccurrence_model(training_data_file, output_file_2)
-
-    accuracies, errors = test_model(output_file, test_data_file)
-    accuracy_total, accuracy_pos, accuracy_neg = accuracies
-    print('-----CONJUNCTIVE-----')
-    print('Total Accuracy: ', accuracy_total)
-    print('Positive Accuracy: ', accuracy_pos)
-    print('Negative Accuracy: ', accuracy_neg)
-    print('---------------------')
-
-    accuracies, errors = test_model(output_file_2, test_data_file)
-    accuracy_total, accuracy_pos, accuracy_neg = accuracies
-    print('-----CO-OCCURRENCE-----')
-    print('Total Accuracy: ', accuracy_total)
-    print('Positive Accuracy: ', accuracy_pos)
-    print('Negative Accuracy: ', accuracy_neg)
-    print('---------------------')
-
-
-# TODO remove main
-if __name__ == '__main__':
-    main()
