@@ -1,5 +1,5 @@
 .*
 yelp_dataset
 __pycache__
-.pyc
-._.DS_Store
+*.pyc
+*._.DS_Store
