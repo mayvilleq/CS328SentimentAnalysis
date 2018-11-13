@@ -311,9 +311,9 @@ def print_error_analysis(errors, top_10_false_lists, file_to_write, model_title,
     Appends error analysis to trained_output_filename. Since we will use this function
     for multiple models and print to the same output file, we take in a string
     model_title and trained_output_filename to print before writing analysis, for
-    ease of writing. We print false positives and false negatives (taken in as a tuple)
-    in the parameter errors. We also print the top 10 words the confuse the model
-    in false positives and false negatives.
+    ease of writing. We print the first five false positives and false negatives
+    (taken in as a tuple) in the parameter errors. We also print the top 10 words
+    the confuse the model in false positives and false negatives.
     '''
 
     # unload parameters
@@ -324,10 +324,10 @@ def print_error_analysis(errors, top_10_false_lists, file_to_write, model_title,
     f = open(file_to_write, 'a')
     f.write("Error Analysis of " + model_title + " with training file: " + trained_output_filename + "\n")
     f.write("False Positives List: \n")
-    f.write(json.dumps(false_pos))
+    f.write(json.dumps(false_pos[:5]))
     f.write("\n")
     f.write("False Negatives List: \n")
-    f.write(json.dumps(false_neg))
+    f.write(json.dumps(false_neg[:5]))
     f.write("\n")
     f.write("Top 10 words contributing to false positives: \n")
     f.write(json.dumps(top_10_false_pos))
@@ -338,11 +338,11 @@ def print_error_analysis(errors, top_10_false_lists, file_to_write, model_title,
 
 
 def main():
-    trained_output_files_list = [["trained_bayes_output/trained_model_1000.json"], ["trained_dictionary_output/trained_conjunction_model_1000.json"], ["trained_dictionary_output/trained_cooccurrence_model_1000.json"]]
-    file_to_write = "testing_test.txt"
+    trained_output_files_list = [["trained_bayes_output/trained_bayes_50.json", "trained_bayes_output/trained_bayes_100.json"], ["trained_conjunction_output/trained_conjunction_50.json", "trained_conjunction_output/trained_conjunction_100.json"], ["trained_cooccurrence_output/trained_cooccurrence_50.json", "trained_cooccurrence_output/trained_cooccurrence_100.json"]]
+    files_to_write = ["testing_test_50.txt", "testing_test_100.txt"]
     test_data_filename = "test_data/yelp_test_sample_1000.json"
 
-    test(trained_output_files_list, test_data_filename, file_to_write, [0])
+    test(trained_output_files_list, test_data_filename, files_to_write, [1])
 
 
 # TODO remove main
