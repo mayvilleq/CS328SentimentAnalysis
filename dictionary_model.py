@@ -229,7 +229,7 @@ def compute_polarities(num_pos_reviews, num_neg_reviews, word_count_pos, word_co
     return polarities
 
 
-def guess(positive, negative, review):
+def guess(positive, negative, review, threshold = 0):
     '''
     Calculates the most probable category for a review to belong to. Returns
     '+' if positive, '-' if negative. (Uses formula for Polarity from Rice-Zorn paper)
@@ -244,10 +244,10 @@ def guess(positive, negative, review):
             num_neg_words += 1
 
     # If polarity 0, random guess
-    if num_pos_words == num_neg_words or num_pos_words + num_neg_words == 0:
+    if (num_pos_words - num_neg_words + threshold) == 0:
         return random.choice(['-', '+'])
     else:
-        polarity = (num_pos_words - num_neg_words) / (num_pos_words + num_neg_words)
+        polarity = (num_pos_words - num_neg_words + threshold) / (num_pos_words + num_neg_words)
         if polarity < 0:
             return '-'
         else:
@@ -319,7 +319,7 @@ def negations(word_tokens):
     return result
 
 
-def test_model(trained_output_filename, test_data_filename):
+def test_model(trained_output_filename, test_data_filename, threshold = 0):
     '''
     Tests the model represented by the given trained ouput file against the given
     file of test data. Returns a tuple of accuracy measures and falsely categorized
@@ -341,6 +341,8 @@ def test_model(trained_output_filename, test_data_filename):
         sentiment = get_sentiment(review)
         if sentiment is 'n':
             continue
+
+        #TODO can add threshold below if want to
         model_guess = guess(positive, negative, review)
 
         # Update counts of correct/incorrect guesses
@@ -375,11 +377,11 @@ def test_model(trained_output_filename, test_data_filename):
 
 def main():
     # TESTING
-    training_data_file = 'training_data/yelp_training_sample_10000.json'
-    output_file = 'trained_dictionary_output/trained_conjunction_model_10000.json'
+    training_data_file = 'training_data/yelp_training_sample_1000total_648pos_352neg.json'
+    output_file = 'trained_dictionary_output/trained_conjunction_model_1000.json'
     test_data_file = 'test_data/yelp_test_sample_1000.json'
     train_conjunction_model(training_data_file, output_file)
-    output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_10000.json'
+    output_file_2 = 'trained_dictionary_output/trained_cooccurrence_model_1000.json'
     train_cooccurrence_model(training_data_file, output_file_2)
 
     accuracies, errors = test_model(output_file, test_data_file)
