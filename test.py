@@ -3,13 +3,17 @@ test.py contains functions to help with testing our three models, printing
 results to a file, and analyzing errors.
 '''
 
-from naive_bayes import test_model as test_model_bayes
-from naive_bayes import load_trained_output as load_output_bayes
-from dictionary_model import load_trained_output as load_output_dict
-from naive_bayes import normalize_word
-from dictionary_model import test_model as test_model_dict
-from seed_dictionaries import stop_words
 import json
+from naive_bayes import (
+    normalize_word,
+    load_trained_output as load_output_bayes,
+    test_model as test_model_bayes,
+)
+from dictionary_model import (
+    load_trained_output as load_output_dict,
+    test_model as test_model_dict,
+)
+from seed_dictionaries import stop_words
 
 
 def test(trained_output_files_list, test_data_filename, files_to_write, indices_for_error_analysis):
@@ -35,18 +39,18 @@ def test(trained_output_files_list, test_data_filename, files_to_write, indices_
 
     # Loop through all training data sizes - since all inner lists same size, can choose arbitrary one to determine length
     for i in range(len(trained_output_files_list[0])):
-        file_to_write = files_to_write[i] #Write one file per size
+        file_to_write = files_to_write[i]  # Write one file per size
 
-        #If i not in indices_for_error_analysis, we just test accuracy
+        # If i not in indices_for_error_analysis, we just test accuracy
         if i not in indices_for_error_analysis:
             accuracies_bayes, errors_bayes = test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'accuracies')
             accuracies_conj, errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies')
             accuracies_co, errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies')
 
-        #Otherwise, test for accuracy and error analysis
+        # Otherwise, test for accuracy and error analysis
         else:
             accuracies_bayes, errors_bayes = test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'errors')
-            accuracies_conj,errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'errors')
+            accuracies_conj, errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'errors')
             accuracies_co, errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'errors')
             compare_across_models_print([trained_output_files_list[0][i], trained_output_files_list[1][i], trained_output_files_list[2][i]], errors_bayes, errors_conj, errors_co, test_data_filename, file_to_write)
         accuracies_list.append([accuracies_bayes, accuracies_conj, accuracies_co])
@@ -54,6 +58,7 @@ def test(trained_output_files_list, test_data_filename, files_to_write, indices_
     with open("test_results/accuracies.json", "w") as outfile:
         json.dump(accuracies_list, outfile)
     return accuracies_list
+
 
 def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
@@ -73,6 +78,7 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_
 
     return accuracies, errors
 
+
 def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
     Helper function for test(). Takes in a trained output file, testing data file,
@@ -91,6 +97,7 @@ def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_wr
 
     return accuracies, errors
 
+
 def test_dictionary_co(trained_output_filename, test_data_filename, file_to_write, type_of_test):
     '''
     Helper function for test(). Takes in a trained output file, testing data file,
@@ -107,6 +114,7 @@ def test_dictionary_co(trained_output_filename, test_data_filename, file_to_writ
     else:
         print_result(accuracies,  file_to_write, "Dictionary Model: Co-occurrence", trained_output_filename)
     return accuracies, errors
+
 
 def print_result(accuracies, file_to_write, model_title, trained_output_filename):
     '''
@@ -273,8 +281,8 @@ def compare_models_correctness(test_data_filename, errors_bayes, errors_conj, er
         reviews = json.loads(test_data_file.read())
 
     # set up dictionaries (described in function comment)
-    shared_false_pos = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
-    shared_false_neg = {"bayes_conj":[], "bayes_co":[], "conj_co":[], "bayes_conj_co":[]}
+    shared_false_pos = {"bayes_conj": [], "bayes_co": [], "conj_co": [], "bayes_conj_co": []}
+    shared_false_neg = {"bayes_conj": [], "bayes_co": [], "conj_co": [], "bayes_conj_co": []}
 
     # Iterate through each review in test data, adding to a category in a dictionary, if appropriate
     for review in reviews:

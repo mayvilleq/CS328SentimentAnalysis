@@ -1,3 +1,8 @@
+'''
+Contains functions that train the naive bayes model and provides a function
+for testing the trained model.
+'''
+
 import json
 import string
 
@@ -151,12 +156,13 @@ def test_model(trained_output_filename, test_data_filename):
     errors = (false_pos, false_neg)
     return accuracies, errors
 
+
 def guess_function(review, word_list, prior, likelihood):
     '''
     guess_function() takes in a review in dictionary form, word_list (the vocabulary)
     a list of priors, and a list of likelihoods. It guesses which category the review
     belongs to, using the formula in the science direct paper, and returns '+' or '-'
-    based on its guess. 
+    based on its guess.
     '''
     prob_positive = prior[0]
     prob_negative = prior[1]

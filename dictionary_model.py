@@ -1,3 +1,8 @@
+'''
+Contains functions that train the conjunction and co-occurence model and
+provides a function for testing the trained models.
+'''
+
 import json
 import random
 import string
