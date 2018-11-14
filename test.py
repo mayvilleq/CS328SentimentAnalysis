@@ -16,7 +16,7 @@ from dictionary_model import (
 from seed_dictionaries import stop_words
 
 
-def test(trained_output_files_list, test_data_filename, files_to_write, indices_for_error_analysis):
+def test(trained_output_files_list, test_data_filename, files_to_write, indices_for_error_analysis, threshold = 0):
     '''
     Tests all three models on the reviews in test_data_filename.
 
@@ -44,8 +44,8 @@ def test(trained_output_files_list, test_data_filename, files_to_write, indices_
         # If i not in indices_for_error_analysis, we just test accuracy
         if i not in indices_for_error_analysis:
             accuracies_bayes, errors_bayes = test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'accuracies')
-            accuracies_conj, errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies')
-            accuracies_co, errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies')
+            accuracies_conj, errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies', threshold = 0)
+            accuracies_co, errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies', threshold = 0)
 
         # Otherwise, test for accuracy and error analysis
         else:
@@ -87,7 +87,7 @@ def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_wr
     (through print_result) to file_to_write if the type_of_test is 'accuracies' or both accuracies
     and errors if the type of test is 'errors.' Returns accuracies and errors.
     '''
-    accuracies, errors = test_model_dict(trained_output_filename, test_data_filename)
+    accuracies, errors = test_model_dict(trained_output_filename, test_data_filename, threshold = 0)
     if type_of_test is 'errors':
         print_result(accuracies, file_to_write, "Dictionary Model: Conjunction", trained_output_filename)
         top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
@@ -106,7 +106,7 @@ def test_dictionary_co(trained_output_filename, test_data_filename, file_to_writ
     (through print_result) to file_to_write if the type_of_test is 'accuracies' or both accuracies
     and errors if the type of test is 'errors.' Returns accuracies and errors.
     '''
-    accuracies, errors = test_model_dict(trained_output_filename, test_data_filename)
+    accuracies, errors = test_model_dict(trained_output_filename, test_data_filename, threshold = 0)
     if type_of_test is 'errors':
         print_result(accuracies,  file_to_write, "Dictionary Model: Co-occurrence", trained_output_filename)
         top_10_false_lists = analyze_false_categorizations_dict(errors, trained_output_filename)
