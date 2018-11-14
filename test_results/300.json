@@ -1,0 +1,19 @@
+Naive Bayes with training file: trained_bayes_output/trained_bayes_300.json
+Total Accuracy: 0.7305
+Positive Accuracy: 0.705087440381558
+Negative Accuracy: 0.8087275693311582
+
+ 
+ Dictionary Model: Conjunction with training file: trained_conjunction_output/trained_conjunction_300.json
+Total Accuracy: 0.7959
+Positive Accuracy: 0.9366719660837308
+Negative Accuracy: 0.36256117455138664
+
+ 
+ Dictionary Model: Co-occurrence with training file: trained_cooccurrence_output/trained_cooccurrence_300.json
+Total Accuracy: 0.5041
+Positive Accuracy: 0.3623476417594065
+Negative Accuracy: 0.9404567699836868
+
+ 
+ 
