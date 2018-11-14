@@ -59,3 +59,22 @@ Bayes + Co-occurr only: 543
 Co-occurr + Conj only: 916
 All three: 197
  
+Naive Bayes with training file: trained_bayes_output/trained_bayes_1000.json
+Total Accuracy: 0.7392
+Positive Accuracy: 0.7134340222575517
+Negative Accuracy: 0.8185154975530179
+
+ 
+ Dictionary Model: Conjunction with training file: trained_conjunction_output/trained_conjunction_1000.json
+Total Accuracy: 0.7978
+Positive Accuracy: 0.8826179120296768
+Negative Accuracy: 0.5367047308319739
+
+ 
+ Dictionary Model: Co-occurrence with training file: trained_cooccurrence_output/trained_cooccurrence_1000.json
+Total Accuracy: 0.7864
+Positive Accuracy: 0.7811340752517223
+Negative Accuracy: 0.802610114192496
+
+ 
+ 
