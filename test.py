@@ -44,8 +44,8 @@ def test(trained_output_files_list, test_data_filename, files_to_write, indices_
         # If i not in indices_for_error_analysis, we just test accuracy
         if i not in indices_for_error_analysis:
             accuracies_bayes, errors_bayes = test_bayes(trained_output_files_list[0][i], test_data_filename, file_to_write, 'accuracies')
-            accuracies_conj, errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies', threshold = 0)
-            accuracies_co, errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies', threshold = 0)
+            accuracies_conj, errors_conj = test_dictionary_conj(trained_output_files_list[1][i], test_data_filename, file_to_write, 'accuracies', threshold)
+            accuracies_co, errors_co = test_dictionary_co(trained_output_files_list[2][i], test_data_filename, file_to_write, 'accuracies', threshold)
 
         # Otherwise, test for accuracy and error analysis
         else:
@@ -79,7 +79,7 @@ def test_bayes(trained_output_filename, test_data_filename, file_to_write, type_
     return accuracies, errors
 
 
-def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write, type_of_test):
+def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_write, type_of_test, threshold):
     '''
     Helper function for test(). Takes in a trained output file, testing data file,
     and an output file. It calls test_model from dictionary_model.py to determine the accuracies
@@ -98,7 +98,7 @@ def test_dictionary_conj(trained_output_filename, test_data_filename, file_to_wr
     return accuracies, errors
 
 
-def test_dictionary_co(trained_output_filename, test_data_filename, file_to_write, type_of_test):
+def test_dictionary_co(trained_output_filename, test_data_filename, file_to_write, type_of_test, threshold):
     '''
     Helper function for test(). Takes in a trained output file, testing data file,
     and an output file. It calls test_model from dictionary_model.py to determine the accuracies
